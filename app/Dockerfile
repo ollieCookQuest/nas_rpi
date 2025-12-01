@@ -28,6 +28,11 @@ RUN npm run build
 # Expose port
 EXPOSE 3000
 
+# Set environment variable for Next.js to find static files
+ENV NODE_ENV=production
+ENV PORT=3000
+
 # Start the application
+# Next.js standalone mode automatically handles static files if they're in the right location
 CMD ["node", ".next/standalone/server.js"]
 
