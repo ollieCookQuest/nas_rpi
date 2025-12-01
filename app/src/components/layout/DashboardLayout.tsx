@@ -54,7 +54,7 @@ export default function DashboardLayout({ children, user }: DashboardLayoutProps
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const handleLogout = async () => {
-    await signOut({ callbackUrl: '/login' })
+    await nextAuthSignOut({ callbackUrl: '/login' })
   }
 
   const isAdmin = user?.role === 'ADMIN'
