@@ -6,13 +6,6 @@ import { prisma } from '@/lib/prisma'
 import { logActivity, ActivityType } from '@/lib/storage'
 import { writeFile } from 'fs/promises'
 import path from 'path'
-import { IncomingForm } from 'formidable'
-
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-}
 
 export async function POST(request: NextRequest) {
   try {
