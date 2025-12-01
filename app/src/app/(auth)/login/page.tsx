@@ -31,11 +31,15 @@ export default function LoginPage() {
 
       if (!response.ok) {
         setError(data.error || 'Login failed')
+        setLoading(false)
         return
       }
 
-      router.push('/dashboard')
-      router.refresh()
+      // Wait a bit for cookie to be set
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
+      // Force a full page navigation to ensure middleware runs
+      window.location.href = '/dashboard'
     } catch (err) {
       setError('An error occurred. Please try again.')
     } finally {
