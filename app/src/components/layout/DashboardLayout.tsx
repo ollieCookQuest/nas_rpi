@@ -96,7 +96,7 @@ export default function DashboardLayout({ children, user }: DashboardLayoutProps
       {/* Main content */}
       <div className="lg:pl-64">
         {/* Top bar */}
-        <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <header className="sticky top-0 z-40 border-b border-border/50 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
           <div className="flex h-16 items-center gap-4 px-4 sm:px-6 lg:px-8">
             <Button
               variant="ghost"
@@ -154,16 +154,16 @@ function SidebarContent({
 }) {
   return (
     <div className="flex h-full flex-col">
-      <div className="flex h-16 items-center border-b px-6 bg-gradient-to-r from-primary/10 to-transparent">
-        <Link href="/dashboard" onClick={onLinkClick} className="flex items-center gap-2 group">
-          <div className="relative">
-            <HardDrive className="h-7 w-7 text-primary transition-transform group-hover:scale-110" />
+      <div className="flex h-16 items-center border-b border-border/50 px-6 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent">
+        <Link href="/dashboard" onClick={onLinkClick} className="flex items-center gap-3 group">
+          <div className="relative flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 group-hover:border-primary/40 transition-all">
+            <HardDrive className="h-5 w-5 text-primary transition-transform group-hover:scale-110" />
           </div>
           <div>
-            <span className="text-lg font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+            <span className="text-lg font-bold text-gradient">
               UniFi Drive
             </span>
-            <p className="text-xs text-muted-foreground">NAS System</p>
+            <p className="text-xs text-muted-foreground">Network Storage</p>
           </div>
         </Link>
       </div>
@@ -176,9 +176,9 @@ function SidebarContent({
               key={item.name}
               href={item.href}
               onClick={onLinkClick}
-              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 hover:bg-accent/50 hover:text-foreground hover:translate-x-1 group"
             >
-              <Icon className="h-5 w-5" />
+              <Icon className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
               {item.name}
             </Link>
           )
@@ -198,9 +198,9 @@ function SidebarContent({
                   key={item.name}
                   href={item.href}
                   onClick={onLinkClick}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 hover:bg-accent/50 hover:text-foreground hover:translate-x-1 group"
                 >
-                  <Icon className="h-5 w-5" />
+                  <Icon className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
                   {item.name}
                 </Link>
               )
