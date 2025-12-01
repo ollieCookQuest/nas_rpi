@@ -198,8 +198,7 @@ export default function SharePage() {
     )
   }
 
-  const item = sharedItem.file || sharedItem.folder
-  if (!item) {
+  if (!sharedItem.file && !sharedItem.folder) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md card-unifi">
@@ -239,7 +238,7 @@ export default function SharePage() {
                 </div>
               )}
             </div>
-            <CardTitle className="text-xl">{item.name || sharedItem.file?.filename || sharedItem.folder?.name}</CardTitle>
+            <CardTitle className="text-xl">{sharedItem.file?.filename || sharedItem.folder?.name || 'Shared Item'}</CardTitle>
             <CardDescription>Shared by a UniFi Drive user</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -284,7 +283,7 @@ export default function SharePage() {
             {sharedItem.file && (
               <Button onClick={handleDownload} className="w-full btn-unifi" size="lg">
                 <Download className="h-4 w-4 mr-2" />
-                Download {item.name}
+                Download {sharedItem.file.filename}
               </Button>
             )}
             {sharedItem.folder && (
