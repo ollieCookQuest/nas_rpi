@@ -89,6 +89,10 @@ if [ "$CREATE_ENV" = true ]; then
     read -p "Enter application port (default: 3000): " APP_PORT
     APP_PORT=${APP_PORT:-3000}
     
+    # Prompt for host/IP
+    read -p "Enter server host/IP (default: localhost): " SERVER_HOST
+    SERVER_HOST=${SERVER_HOST:-localhost}
+    
     # Prompt for storage path
     read -p "Enter storage path (default: ./data/storage): " STORAGE_PATH
     STORAGE_PATH=${STORAGE_PATH:-./data/storage}
@@ -105,7 +109,8 @@ DATABASE_URL=postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres:5432/nas
 
 # Application Configuration
 APP_PORT=$APP_PORT
-NEXTAUTH_URL=http://localhost:$APP_PORT
+NEXTAUTH_URL=http://${SERVER_HOST}:$APP_PORT
+AUTH_URL=http://${SERVER_HOST}:$APP_PORT
 
 # Auth Secret (NextAuth.js)
 JWT_SECRET=$JWT_SECRET

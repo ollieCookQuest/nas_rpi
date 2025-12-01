@@ -69,5 +69,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     maxAge: 60 * 60 * 24 * 7, // 7 days
   },
   secret: process.env.JWT_SECRET || process.env.AUTH_SECRET,
+  debug: process.env.NODE_ENV === 'development',
 })
 
