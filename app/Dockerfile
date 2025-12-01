@@ -25,14 +25,22 @@ RUN npx prisma generate
 # Build Next.js application
 RUN npm run build
 
+# The standalone output is in .next/standalone
+# Static files are in .next/static and need to be accessible
+# Next.js standalone server expects .next/static to be at the same level
+# Ensure public directory exists for static assets
+RUN mkdir -p .next/standalone/.next/static && \
+    cp -r .next/static/* .next/standalone/.next/static/ 2>/dev/null || true
+
 # Expose port
 EXPOSE 3000
 
-# Set environment variable for Next.js to find static files
+# Set environment variable for Next.js
 ENV NODE_ENV=production
 ENV PORT=3000
 
-# Start the application
-# Next.js standalone mode automatically handles static files if they're in the right location
-CMD ["node", ".next/standalone/server.js"]
+# Change to standalone directory and run server
+WORKDIR /app/.next/standalone
 
+# Start the application
+CMD ["node", "server.js"]
