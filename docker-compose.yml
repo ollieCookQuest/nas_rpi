@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:8.0
+    container_name: nas_mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_DATABASE:-nas}
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+    networks:
+      - nas_network
+    command: mongod --replSet rs0 --bind_ip_all
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    platform: linux/arm64
+
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    container_name: nas_app
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://10.10.10.32:3000}
+      - STORAGE_PATH=${STORAGE_PATH:-/data/storage}
+      - UPLOAD_MAX_SIZE=${UPLOAD_MAX_SIZE:-10737418240}
+    volumes:
+      - app_data:/data/storage
+      - ./app:/app
+      - /app/node_modules
+      - /app/.next
+    networks:
+      - nas_network
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    platform: linux/arm64
+
+volumes:
+  mongodb_data:
+    driver: local
+  mongodb_config:
+    driver: local
+  app_data:
+    driver: local
+
+networks:
+  nas_network:
+    driver: bridge
+

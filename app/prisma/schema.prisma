@@ -1,0 +1,137 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+enum ActivityType {
+  FILE_CREATE
+  FILE_DELETE
+  FILE_MODIFY
+  FILE_DOWNLOAD
+  FILE_UPLOAD
+  FOLDER_CREATE
+  FOLDER_DELETE
+  SHARE_CREATE
+  SHARE_DELETE
+  USER_CREATE
+  USER_UPDATE
+  USER_DELETE
+}
+
+model User {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String   @unique
+  username  String   @unique
+  password  String
+  role      UserRole @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  files     File[]
+  folders   Folder[]
+  shares    Share[]
+  activities ActivityLog[]
+
+  @@map("users")
+}
+
+model File {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  filename    String
+  path        String
+  mimeType    String
+  size        Int
+  ownerId     String   @db.ObjectId
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  folderId    String?  @db.ObjectId
+  folder      Folder?  @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  isShared    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([path, ownerId])
+  @@index([ownerId])
+  @@index([folderId])
+  @@map("files")
+}
+
+model Folder {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  path        String
+  ownerId     String   @db.ObjectId
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  parentId    String?  @db.ObjectId
+  parent      Folder?  @relation("FolderHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children    Folder[] @relation("FolderHierarchy")
+  files       File[]
+  isShared    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([path, ownerId])
+  @@index([ownerId])
+  @@index([parentId])
+  @@map("folders")
+}
+
+model Share {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  token       String   @unique
+  fileId      String?  @db.ObjectId
+  folderId    String?  @db.ObjectId
+  ownerId     String   @db.ObjectId
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  isPublic    Boolean  @default(false)
+  expiresAt   DateTime?
+  password    String?
+  accessCount Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([token])
+  @@index([ownerId])
+  @@map("shares")
+}
+
+model ActivityLog {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  type        ActivityType
+  userId      String       @db.ObjectId
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  description String
+  metadata    String?      // JSON string for additional data
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime     @default(now())
+
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("activity_logs")
+}
+
+model DiskUsage {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  totalBytes  BigInt
+  usedBytes   BigInt
+  freeBytes   BigInt
+  userId      String?  @db.ObjectId
+  path        String?
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("disk_usage")
+}
+
