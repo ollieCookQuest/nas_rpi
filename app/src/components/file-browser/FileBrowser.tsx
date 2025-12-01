@@ -42,6 +42,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
 import { cn } from '@/lib/utils'
 
 interface FileItem {
@@ -237,24 +238,36 @@ export default function FileBrowser({ currentPath = '' }: FileBrowserProps) {
     }
   }
 
-  const handleShare = async () => {
+  const handleShare = async (shareData: {
+    isPublic: boolean
+    password?: string
+    expiresAt?: string
+  }) => {
     if (!shareDialog.item) return
 
     try {
-      const shareData: any = {
-        isPublic: true,
+      const requestData: any = {
+        isPublic: shareData.isPublic,
+      }
+
+      if (shareData.password) {
+        requestData.password = shareData.password
+      }
+
+      if (shareData.expiresAt) {
+        requestData.expiresAt = shareData.expiresAt
       }
 
       if (shareDialog.item.type === 'file') {
-        shareData.filePath = shareDialog.item.path
+        requestData.filePath = shareDialog.item.path
       } else {
-        shareData.folderPath = shareDialog.item.path
+        requestData.folderPath = shareDialog.item.path
       }
 
       const response = await fetch('/api/shares', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(shareData),
+        body: JSON.stringify(requestData),
       })
 
       if (!response.ok) {
@@ -688,19 +701,13 @@ export default function FileBrowser({ currentPath = '' }: FileBrowserProps) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Share {shareDialog.item?.name}</DialogTitle>
-            <DialogDescription>Create a shareable link</DialogDescription>
+            <DialogDescription>Create a shareable link with optional password protection and expiration</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShareDialog({ open: false, item: null })}>
-                Cancel
-              </Button>
-              <Button onClick={handleShare}>
-                <Share2 className="h-4 w-4 mr-2" />
-                Create Share Link
-              </Button>
-            </div>
-          </div>
+          <ShareDialogForm 
+            item={shareDialog.item}
+            onCancel={() => setShareDialog({ open: false, item: null })}
+            onShare={handleShare}
+          />
         </DialogContent>
       </Dialog>
 
@@ -714,6 +721,120 @@ export default function FileBrowser({ currentPath = '' }: FileBrowserProps) {
           onOpenChange={(open) => !open && setMediaViewer(null)}
         />
       )}
+    </div>
+  )
+}
+
+// Share Dialog Form Component
+function ShareDialogForm({
+  item,
+  onCancel,
+  onShare,
+}: {
+  item: { path: string; name: string; type: 'file' | 'folder' } | null
+  onCancel: () => void
+  onShare: (data: { isPublic: boolean; password?: string; expiresAt?: string }) => void
+}) {
+  const [isPublic, setIsPublic] = useState(true)
+  const [password, setPassword] = useState('')
+  const [hasPassword, setHasPassword] = useState(false)
+  const [expiresIn, setExpiresIn] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const handleSubmit = async () => {
+    setLoading(true)
+    try {
+      let expiresAt: string | undefined
+      if (expiresIn) {
+        const days = parseInt(expiresIn)
+        if (days > 0) {
+          const date = new Date()
+          date.setDate(date.getDate() + days)
+          expiresAt = date.toISOString()
+        }
+      }
+
+      await onShare({
+        isPublic,
+        password: hasPassword ? password : undefined,
+        expiresAt,
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center space-x-2">
+        <Checkbox
+          id="public"
+          checked={isPublic}
+          onCheckedChange={(checked) => setIsPublic(checked === true)}
+        />
+        <Label htmlFor="public" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+          Public share (accessible without login)
+        </Label>
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="password-protect"
+            checked={hasPassword}
+            onCheckedChange={(checked) => {
+              setHasPassword(checked === true)
+              if (!checked) setPassword('')
+            }}
+          />
+          <Label htmlFor="password-protect" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+            Password protect
+          </Label>
+        </div>
+        {hasPassword && (
+          <Input
+            type="password"
+            placeholder="Enter password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="mt-2"
+          />
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="expires">Expires in (days, optional)</Label>
+        <Input
+          id="expires"
+          type="number"
+          min="1"
+          placeholder="e.g., 7"
+          value={expiresIn}
+          onChange={(e) => setExpiresIn(e.target.value)}
+        />
+        <p className="text-xs text-muted-foreground">
+          Leave empty for no expiration
+        </p>
+      </div>
+
+      <div className="flex justify-end gap-2 pt-4">
+        <Button variant="outline" onClick={onCancel} disabled={loading}>
+          Cancel
+        </Button>
+        <Button onClick={handleSubmit} disabled={loading}>
+          {loading ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Creating...
+            </>
+          ) : (
+            <>
+              <Share2 className="h-4 w-4 mr-2" />
+              Create Share Link
+            </>
+          )}
+        </Button>
+      </div>
     </div>
   )
 }

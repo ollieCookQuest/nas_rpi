@@ -124,22 +124,67 @@ export async function getDiskUsage(userId?: string) {
 
   const usedBytes = await calculateSize(storagePath)
   
-  // Try to get disk stats using df command or estimate
-  // For now, we'll store used bytes and let the system calculate total/free
-  // This can be enhanced with a system call to df if needed
-  // Ensure totalBytes is never 0 to prevent division by zero
+  // Get actual disk stats using df command or statvfs
+  let totalBytes = BigInt(0)
+  let freeBytes = BigInt(0)
+  
+  try {
+    const { execSync } = require('child_process')
+    
+    // Use df command to get real disk stats
+    const dfOutput = execSync(`df -B1 "${storagePath}"`, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] })
+    const lines = dfOutput.trim().split('\n')
+    if (lines.length >= 2) {
+      const parts = lines[1].trim().split(/\s+/)
+      if (parts.length >= 4) {
+        totalBytes = BigInt(parseInt(parts[1], 10))
+        const used = BigInt(parseInt(parts[2], 10))
+        freeBytes = BigInt(parseInt(parts[3], 10))
+      }
+    }
+  } catch (error) {
+    // If df fails, try statvfs (Node.js 18.11+)
+    try {
+      const { statfsSync } = require('fs')
+      if (typeof statfsSync === 'function') {
+        const stats = statfsSync(storagePath)
+        totalBytes = BigInt(stats.blocks) * BigInt(stats.frsize || stats.bsize)
+        freeBytes = BigInt(stats.bavail) * BigInt(stats.frsize || stats.bsize)
+      }
+    } catch (e) {
+      // Last resort: try parent directory
+      try {
+        const parentPath = path.dirname(storagePath)
+        const { execSync } = require('child_process')
+        const dfOutput = execSync(`df -B1 "${parentPath}"`, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] })
+        const lines = dfOutput.trim().split('\n')
+        if (lines.length >= 2) {
+          const parts = lines[1].trim().split(/\s+/)
+          if (parts.length >= 4) {
+            totalBytes = BigInt(parseInt(parts[1], 10))
+            freeBytes = BigInt(parseInt(parts[3], 10))
+          }
+        }
+      } catch (err) {
+        // Fallback: estimate with reasonable defaults
+        const usedBytesBigInt = BigInt(usedBytes)
+        totalBytes = BigInt(100_000_000_000_000) // 100TB default
+        freeBytes = totalBytes > usedBytesBigInt 
+          ? totalBytes - usedBytesBigInt 
+          : BigInt(0)
+      }
+    }
+  }
+
   const usedBytesBigInt = BigInt(usedBytes)
-  const totalBytes = usedBytes === 0 
-    ? BigInt(1_000_000_000_000) // Default to 1TB if no files yet
-    : BigInt(usedBytes * 2) // Estimate: used * 2
-  const freeBytes = totalBytes > usedBytesBigInt 
+  const actualFreeBytes = totalBytes > usedBytesBigInt 
     ? totalBytes - usedBytesBigInt 
     : BigInt(0)
 
   return {
     totalBytes,
     usedBytes: usedBytesBigInt,
-    freeBytes,
+    freeBytes: actualFreeBytes > freeBytes ? freeBytes : actualFreeBytes,
   }
 }
 
