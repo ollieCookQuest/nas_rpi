@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { Users, Plus, Loader2, Trash2 } from 'lucide-react'
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {

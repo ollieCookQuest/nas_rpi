@@ -5,6 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { formatBytes } from '@/lib/utils'
 import { HardDrive, Folder, File, Activity as ActivityIcon } from 'lucide-react'
 
+// Force dynamic rendering since we use auth() and database
+export const dynamic = 'force-dynamic'
+
 export default async function DashboardPage() {
   const session = await auth()
 

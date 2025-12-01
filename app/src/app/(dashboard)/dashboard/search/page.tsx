@@ -2,6 +2,9 @@
 
 import { useState } from 'react'
 import { Search, File, Folder, Loader2 } from 'lucide-react'
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'

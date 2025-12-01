@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { Activity, Loader2 } from 'lucide-react'
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
 import { Card } from '@/components/ui/card'
 import { formatDate } from '@/lib/utils'
 
