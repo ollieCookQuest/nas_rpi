@@ -2,7 +2,7 @@ import { auth } from '@/auth'
 import { getDiskUsage } from '@/lib/storage'
 import { prisma } from '@/lib/prisma'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { formatBytes } from '@/lib/utils'
+import { formatBytes, cn } from '@/lib/utils'
 import { HardDrive, Folder, File, Activity as ActivityIcon } from 'lucide-react'
 
 // Force dynamic rendering since we use auth() and database
@@ -35,8 +35,8 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground">Welcome back! Here's an overview of your storage.</p>
+        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <p className="text-muted-foreground mt-1">Welcome back, {session.user.username}! Here's an overview of your storage.</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -52,8 +52,11 @@ export default async function DashboardPage() {
             </p>
             <div className="mt-2 h-2 w-full bg-secondary rounded-full overflow-hidden">
               <div
-                className="h-full bg-primary transition-all"
-                style={{ width: `${usagePercent}%` }}
+                className={cn(
+                  "h-full transition-all rounded-full",
+                  usagePercent > 90 ? "bg-destructive" : usagePercent > 75 ? "bg-orange-500" : "bg-primary"
+                )}
+                style={{ width: `${Math.min(usagePercent, 100)}%` }}
               />
             </div>
           </CardContent>
