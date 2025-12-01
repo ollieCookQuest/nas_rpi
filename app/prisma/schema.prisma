@@ -25,22 +25,26 @@ enum ActivityType {
   FOLDER_DELETE
   SHARE_CREATE
   SHARE_DELETE
+  NAS_SHARE_CREATE
+  NAS_SHARE_DELETE
+  NAS_SHARE_UPDATE
   USER_CREATE
   USER_UPDATE
   USER_DELETE
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  username  String   @unique
+  id        String     @id @default(uuid())
+  email     String     @unique
+  username  String     @unique
   password  String
-  role      UserRole @default(USER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  role      UserRole   @default(USER)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
   files     File[]
   folders   Folder[]
   shares    Share[]
+  nasShares NasShare[]
   activities ActivityLog[]
 
   @@map("users")
@@ -132,5 +136,35 @@ model DiskUsage {
 
   @@index([createdAt])
   @@map("disk_usage")
+}
+
+enum ShareProtocol {
+  NFS
+  SMB
+}
+
+enum SharePermission {
+  READ_ONLY
+  READ_WRITE
+}
+
+model NasShare {
+  id          String         @id @default(uuid())
+  name        String
+  path        String         // Local filesystem path
+  protocol    ShareProtocol  @default(NFS)
+  permissions SharePermission @default(READ_WRITE)
+  enabled     Boolean        @default(true)
+  description String?
+  allowedIPs  String?        // Comma-separated IPs or CIDR ranges
+  createdById String
+  createdBy   User           @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@unique([name])
+  @@index([createdById])
+  @@index([protocol])
+  @@map("nas_shares")
 }
 

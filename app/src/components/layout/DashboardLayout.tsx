@@ -16,7 +16,8 @@ import {
   Menu,
   X,
   Share2,
-  ChevronRight
+  ChevronRight,
+  Network
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -49,6 +50,7 @@ const navigation = [
 
 const adminNavigation = [
   { name: 'Users', href: '/admin/users', icon: Users },
+  { name: 'NAS Shares', href: '/admin/nas-shares', icon: Network },
   { name: 'Storage', href: '/admin/storage', icon: HardDrive },
   { name: 'Settings', href: '/admin/settings', icon: Settings },
 ]

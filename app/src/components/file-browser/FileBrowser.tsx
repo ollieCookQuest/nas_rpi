@@ -359,6 +359,41 @@ export default function FileBrowser({ currentPath = '' }: FileBrowserProps) {
             </Button>
           </div>
 
+          {selectedItems.size > 0 ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="btn-unifi"
+              onClick={() => {
+                // Share the first selected item
+                const firstSelected = Array.from(selectedItems)[0]
+                const file = files.find(f => f.path === firstSelected)
+                const folder = folders.find(f => f.path === firstSelected)
+                if (file) {
+                  setShareDialog({ open: true, item: { path: file.path, name: file.name, type: 'file' } })
+                } else if (folder) {
+                  setShareDialog({ open: true, item: { path: folder.path, name: folder.name, type: 'folder' } })
+                }
+              }}
+            >
+              <Share2 className="h-4 w-4 mr-2" />
+              Share ({selectedItems.size})
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              className="btn-unifi"
+              onClick={() => {
+                // Show helpful message
+                alert('To create a share:\n\n1. Select a file or folder by clicking the checkbox\n2. Click "Share" button, OR\n3. Hover over any item and click the menu icon (⋮), then select "Share"')
+              }}
+            >
+              <Share2 className="h-4 w-4 mr-2" />
+              Share
+            </Button>
+          )}
+
           <Dialog open={showNewFolderDialog} onOpenChange={setShowNewFolderDialog}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm" className="btn-unifi">

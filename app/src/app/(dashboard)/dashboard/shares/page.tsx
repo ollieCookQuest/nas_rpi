@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Share2, Copy, Trash2, Loader2, ExternalLink, Lock, Calendar } from 'lucide-react'
+import { Share2, Copy, Trash2, Loader2, ExternalLink, Lock, Calendar, Plus, ArrowRight } from 'lucide-react'
+import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { formatDate } from '@/lib/utils'
@@ -66,9 +67,18 @@ export default function SharesPage() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="space-y-1">
-        <h1 className="text-3xl font-semibold tracking-tight">Shares</h1>
-        <p className="text-muted-foreground">Manage your shared files and folders</p>
+      <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-semibold tracking-tight">Web Shares</h1>
+          <p className="text-muted-foreground">Manage shareable links for files and folders</p>
+        </div>
+        <Link href="/dashboard/files">
+          <Button className="btn-unifi">
+            <Plus className="h-4 w-4 mr-2" />
+            Create Share Link
+            <ArrowRight className="h-4 w-4 ml-2" />
+          </Button>
+        </Link>
       </div>
 
       {loading ? (
@@ -77,11 +87,22 @@ export default function SharesPage() {
         </div>
       ) : shares.length === 0 ? (
         <Card className="card-unifi">
-          <CardContent className="py-12 text-center">
-            <Share2 className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
-            <p className="text-sm text-muted-foreground">
-              No shares yet. Share a file or folder to get started.
+          <CardContent className="py-12 text-center space-y-4">
+            <Share2 className="h-12 w-12 text-muted-foreground/50 mx-auto" />
+            <div className="space-y-2">
+              <p className="text-sm font-medium">No shares yet</p>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto">
+              To create a shareable link, go to Files and click the menu icon (⋮) on any file or folder, then select "Share".
+              <br /><br />
+              For network shares (NFS/SMB), go to Admin → NAS Shares.
             </p>
+            </div>
+            <Link href="/dashboard/files">
+              <Button variant="outline" className="mt-4 btn-unifi">
+                <ArrowRight className="h-4 w-4 mr-2" />
+                Go to Files
+              </Button>
+            </Link>
           </CardContent>
         </Card>
       ) : (
