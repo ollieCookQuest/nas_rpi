@@ -127,12 +127,18 @@ export async function getDiskUsage(userId?: string) {
   // Try to get disk stats using df command or estimate
   // For now, we'll store used bytes and let the system calculate total/free
   // This can be enhanced with a system call to df if needed
-  const totalBytes = BigInt(usedBytes * 2) // Placeholder - should use actual disk stats
-  const freeBytes = totalBytes - BigInt(usedBytes)
+  // Ensure totalBytes is never 0 to prevent division by zero
+  const usedBytesBigInt = BigInt(usedBytes)
+  const totalBytes = usedBytes === 0 
+    ? BigInt(1_000_000_000_000) // Default to 1TB if no files yet
+    : BigInt(usedBytes * 2) // Estimate: used * 2
+  const freeBytes = totalBytes > usedBytesBigInt 
+    ? totalBytes - usedBytesBigInt 
+    : BigInt(0)
 
   return {
     totalBytes,
-    usedBytes: BigInt(usedBytes),
+    usedBytes: usedBytesBigInt,
     freeBytes,
   }
 }
