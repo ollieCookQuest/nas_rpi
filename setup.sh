@@ -107,8 +107,9 @@ DATABASE_URL=postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres:5432/nas
 APP_PORT=$APP_PORT
 NEXTAUTH_URL=http://localhost:$APP_PORT
 
-# JWT Secret
+# Auth Secret (NextAuth.js)
 JWT_SECRET=$JWT_SECRET
+AUTH_SECRET=$JWT_SECRET
 
 # Storage Configuration
 STORAGE_PATH=/data/storage

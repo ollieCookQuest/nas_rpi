@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import { verifyToken } from '@/lib/auth'
+import { getSession, unauthorizedResponse } from '@/lib/api-helpers'
 import { getUserFilePath, getFileStats } from '@/lib/storage'
 import { logActivity, ActivityType } from '@/lib/storage'
 import { prisma } from '@/lib/prisma'
@@ -9,12 +8,9 @@ import path from 'path'
 
 export async function GET(request: NextRequest) {
   try {
-    const cookieStore = await cookies()
-    const token = cookieStore.get('auth-token')?.value
-    const payload = verifyToken(token || '')
-
-    if (!payload) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const session = await getSession()
+    if (!session) {
+      return unauthorizedResponse()
     }
 
     const { searchParams } = new URL(request.url)
@@ -32,10 +28,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Get file metadata from database
-    const relativePath = path.relative(getUserFilePath(payload.userId, ''), fullPath)
+    const relativePath = path.relative(getUserFilePath(session.user.id, ''), fullPath)
     const dbFile = await prisma.file.findFirst({
       where: {
-        ownerId: payload.userId,
+        ownerId: session.user.id,
         path: relativePath,
       },
     })

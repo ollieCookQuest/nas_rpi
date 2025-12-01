@@ -33,6 +33,8 @@ services:
       - NODE_ENV=production
       - DATABASE_URL=${DATABASE_URL}
       - JWT_SECRET=${JWT_SECRET}
+      - AUTH_SECRET=${JWT_SECRET}
+      - AUTH_URL=http://localhost:${APP_PORT}
       - NEXTAUTH_URL=${NEXTAUTH_URL:-http://10.10.10.32:3000}
       - STORAGE_PATH=${STORAGE_PATH:-/data/storage}
       - UPLOAD_MAX_SIZE=${UPLOAD_MAX_SIZE:-10737418240}
