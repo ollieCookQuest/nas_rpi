@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mongodb"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -31,7 +31,7 @@ enum ActivityType {
 }
 
 model User {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  id        String   @id @default(uuid())
   email     String   @unique
   username  String   @unique
   password  String
@@ -47,15 +47,15 @@ model User {
 }
 
 model File {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  id          String   @id @default(uuid())
   filename    String
   path        String
   mimeType    String
   size        Int
-  ownerId     String   @db.ObjectId
+  ownerId     String
   owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  folderId    String?  @db.ObjectId
-  folder      Folder?  @relation(fields: [folderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  folderId    String?
+  folder      Folder?  @relation(fields: [folderId], references: [id], onDelete: SetNull)
   isShared    Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -67,13 +67,13 @@ model File {
 }
 
 model Folder {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  id          String   @id @default(uuid())
   name        String
   path        String
-  ownerId     String   @db.ObjectId
+  ownerId     String
   owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  parentId    String?  @db.ObjectId
-  parent      Folder?  @relation("FolderHierarchy", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  parentId    String?
+  parent      Folder?  @relation("FolderHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
   children    Folder[] @relation("FolderHierarchy")
   files       File[]
   isShared    Boolean  @default(false)
@@ -87,11 +87,11 @@ model Folder {
 }
 
 model Share {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  id          String   @id @default(uuid())
   token       String   @unique
-  fileId      String?  @db.ObjectId
-  folderId    String?  @db.ObjectId
-  ownerId     String   @db.ObjectId
+  fileId      String?
+  folderId    String?
+  ownerId     String
   owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   isPublic    Boolean  @default(false)
   expiresAt   DateTime?
@@ -105,9 +105,9 @@ model Share {
 }
 
 model ActivityLog {
-  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  id          String       @id @default(uuid())
   type        ActivityType
-  userId      String       @db.ObjectId
+  userId      String
   user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   description String
   metadata    String?      // JSON string for additional data
@@ -122,11 +122,11 @@ model ActivityLog {
 }
 
 model DiskUsage {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  id          String   @id @default(uuid())
   totalBytes  BigInt
   usedBytes   BigInt
   freeBytes   BigInt
-  userId      String?  @db.ObjectId
+  userId      String?
   path        String?
   createdAt   DateTime @default(now())
 

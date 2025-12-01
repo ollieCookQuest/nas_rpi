@@ -49,18 +49,8 @@ fi
 # Create necessary directories
 echo "Creating necessary directories..."
 mkdir -p data/storage
-mkdir -p data/mongodb
+mkdir -p data/postgres
 mkdir -p data/config
-mkdir -p scripts
-
-# Generate MongoDB keyfile for replica set
-if [ ! -f scripts/mongo-keyfile ]; then
-    echo "Generating MongoDB keyfile..."
-    openssl rand -base64 756 > scripts/mongo-keyfile
-    chmod 400 scripts/mongo-keyfile
-    echo -e "${GREEN}MongoDB keyfile created.${NC}"
-fi
-
 echo -e "${GREEN}Directories created.${NC}"
 
 # Check if .env exists
@@ -85,15 +75,15 @@ if [ "$CREATE_ENV" = true ]; then
     # Generate random JWT secret
     JWT_SECRET=$(openssl rand -hex 32)
     
-    # Prompt for MongoDB root password
+    # Prompt for PostgreSQL password
     echo ""
-    read -sp "Enter MongoDB root password (default: change_me_secure_password): " MONGO_PASSWORD
+    read -sp "Enter PostgreSQL password (default: change_me_secure_password): " POSTGRES_PASSWORD
     echo ""
-    MONGO_PASSWORD=${MONGO_PASSWORD:-change_me_secure_password}
+    POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-change_me_secure_password}
     
-    # Prompt for MongoDB root username
-    read -p "Enter MongoDB root username (default: admin): " MONGO_USERNAME
-    MONGO_USERNAME=${MONGO_USERNAME:-admin}
+    # Prompt for PostgreSQL username
+    read -p "Enter PostgreSQL username (default: postgres): " POSTGRES_USER
+    POSTGRES_USER=${POSTGRES_USER:-postgres}
     
     # Prompt for app port
     read -p "Enter application port (default: 3000): " APP_PORT
@@ -105,13 +95,13 @@ if [ "$CREATE_ENV" = true ]; then
     
     # Create .env file
     cat > .env << EOF
-# MongoDB Configuration
-MONGO_ROOT_USERNAME=$MONGO_USERNAME
-MONGO_ROOT_PASSWORD=$MONGO_PASSWORD
-MONGO_DATABASE=nas
+# PostgreSQL Configuration
+POSTGRES_USER=$POSTGRES_USER
+POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+POSTGRES_DB=nas
 
 # Database URL for Prisma
-DATABASE_URL=mongodb://$MONGO_USERNAME:$MONGO_PASSWORD@mongodb:27017/nas?authSource=admin
+DATABASE_URL=postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres:5432/nas
 
 # Application Configuration
 APP_PORT=$APP_PORT
@@ -134,27 +124,7 @@ echo "Building and starting containers..."
 docker compose up -d --build
 
 echo ""
-echo -e "${GREEN}Waiting for MongoDB to be ready...${NC}"
-sleep 15
-
-# Initialize MongoDB replica set (required for Prisma)
-echo "Initializing MongoDB replica set..."
-docker compose exec -T mongodb mongosh --eval "
-  try {
-    rs.initiate({
-      _id: 'rs0',
-      members: [{ _id: 0, host: 'localhost:27017' }]
-    });
-    print('Replica set initialized');
-  } catch (e) {
-    if (e.code === 103) {
-      print('Replica set already initialized');
-    } else {
-      print('Error: ' + e);
-    }
-  }
-" || echo "Replica set initialization attempted"
-
+echo -e "${GREEN}Waiting for PostgreSQL to be ready...${NC}"
 sleep 5
 
 # Run Prisma migrations
