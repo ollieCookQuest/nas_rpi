@@ -419,16 +419,18 @@ export default function FileBrowser({ currentPath = '' }: FileBrowserProps) {
             <Card 
               key={folder.path} 
               className={cn(
-                "p-4 hover:bg-accent transition-colors cursor-pointer group relative",
-                selectedItems.has(folder.path) && "ring-2 ring-primary"
+                "p-5 hover:bg-accent/50 hover:border-primary/30 transition-all duration-200 cursor-pointer group relative card-hover",
+                selectedItems.has(folder.path) && "ring-2 ring-primary border-primary/50"
               )}
               onClick={() => handleFolderClick(folder.path)}
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
-                  <Folder className="h-10 w-10 text-primary mb-2" />
-                  <p className="font-medium truncate">{folder.name}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <div className="mb-3 p-2.5 rounded-lg bg-primary/10 w-fit group-hover:bg-primary/20 transition-colors">
+                    <Folder className="h-6 w-6 text-primary" />
+                  </div>
+                  <p className="font-semibold truncate mb-1">{folder.name}</p>
+                  <p className="text-xs text-muted-foreground">
                     {formatDate(folder.createdAt)}
                   </p>
                 </div>
@@ -477,15 +479,17 @@ export default function FileBrowser({ currentPath = '' }: FileBrowserProps) {
               <Card 
                 key={file.path} 
                 className={cn(
-                  "p-4 hover:bg-accent transition-colors group relative",
-                  selectedItems.has(file.path) && "ring-2 ring-primary"
+                  "p-5 hover:bg-accent/50 hover:border-primary/30 transition-all duration-200 group relative card-hover",
+                  selectedItems.has(file.path) && "ring-2 ring-primary border-primary/50"
                 )}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
-                    <FileIcon className="h-10 w-10 text-muted-foreground mb-2" />
-                    <p className="font-medium truncate">{file.name}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <div className="mb-3 p-2.5 rounded-lg bg-muted/50 w-fit group-hover:bg-muted transition-colors">
+                      <FileIcon className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <p className="font-semibold truncate mb-1">{file.name}</p>
+                    <p className="text-xs text-muted-foreground">
                       {file.size ? formatBytes(file.size) : 'Unknown size'}
                     </p>
                   </div>
@@ -544,12 +548,12 @@ export default function FileBrowser({ currentPath = '' }: FileBrowserProps) {
           )}
         </div>
       ) : (
-        <Card>
-          <div className="divide-y">
+        <Card className="overflow-hidden">
+          <div className="divide-y divide-border/50">
             {folders.map((folder) => (
               <div
                 key={folder.path}
-                className="flex items-center gap-4 p-4 hover:bg-accent transition-colors cursor-pointer group"
+                className="flex items-center gap-4 p-4 hover:bg-accent/50 transition-colors cursor-pointer group border-l-2 border-transparent hover:border-primary/50"
                 onClick={() => handleFolderClick(folder.path)}
               >
                 <Folder className="h-5 w-5 text-primary flex-shrink-0" />
@@ -600,10 +604,10 @@ export default function FileBrowser({ currentPath = '' }: FileBrowserProps) {
             {files.map((file) => {
               const FileIcon = getFileIcon(file.mimeType)
               return (
-                <div
-                  key={file.path}
-                  className="flex items-center gap-4 p-4 hover:bg-accent transition-colors group"
-                >
+              <div
+                key={file.path}
+                className="flex items-center gap-4 p-4 hover:bg-accent/50 transition-colors group border-l-2 border-transparent hover:border-primary/50"
+              >
                   <FileIcon className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="font-medium truncate">{file.name}</p>
