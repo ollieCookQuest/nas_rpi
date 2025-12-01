@@ -1,5 +1,8 @@
 import { auth } from '@/auth'
 
+// Force dynamic rendering since we use auth() which reads cookies
+export const dynamic = 'force-dynamic'
+
 export default async function TestAuthPage() {
   try {
     const session = await auth()

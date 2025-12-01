@@ -2,6 +2,9 @@ import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 
+// Force dynamic rendering since we use auth() which reads cookies
+export const dynamic = 'force-dynamic'
+
 export default async function DashboardLayoutWrapper({
   children,
 }: {
