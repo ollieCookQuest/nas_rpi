@@ -36,7 +36,7 @@ export default async function DashboardPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground mt-1">Welcome back, {session.user.username}! Here's an overview of your storage.</p>
+        <p className="text-muted-foreground mt-1">Welcome back, {session.user.name || session.user.email?.split('@')[0] || 'User'}! Here's an overview of your storage.</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
