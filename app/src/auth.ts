@@ -5,6 +5,7 @@ import { verifyPassword } from "@/lib/auth"
 import { UserRole } from "@prisma/client"
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  trustHost: true,
   providers: [
     Credentials({
       name: "Credentials",

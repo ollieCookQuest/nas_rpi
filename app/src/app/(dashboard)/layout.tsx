@@ -7,19 +7,24 @@ export default async function DashboardLayoutWrapper({
 }: {
   children: React.ReactNode
 }) {
-  const session = await auth()
+  try {
+    const session = await auth()
 
-  if (!session?.user) {
+    if (!session?.user) {
+      redirect('/login')
+    }
+
+    const user = {
+      id: session.user.id,
+      email: session.user.email || '',
+      username: session.user.name || '',
+      role: session.user.role,
+    }
+
+    return <DashboardLayout user={user}>{children}</DashboardLayout>
+  } catch (error) {
+    console.error('Dashboard layout error:', error)
     redirect('/login')
   }
-
-  const user = {
-    id: session.user.id,
-    email: session.user.email || '',
-    username: session.user.name || '',
-    role: session.user.role,
-  }
-
-  return <DashboardLayout user={user}>{children}</DashboardLayout>
 }
 

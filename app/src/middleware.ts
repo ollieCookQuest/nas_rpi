@@ -3,29 +3,36 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
 export default auth((req) => {
-  const { pathname } = req.nextUrl
-  const isLoggedIn = !!req.auth
+  try {
+    const { pathname } = req.nextUrl
+    const isLoggedIn = !!req.auth
 
-  // Public routes
-  if (pathname.startsWith('/login') || pathname.startsWith('/signup') || pathname.startsWith('/api/auth')) {
+    // Public routes
+    if (pathname.startsWith('/login') || pathname.startsWith('/signup') || pathname.startsWith('/api/auth')) {
+      return NextResponse.next()
+    }
+
+    // Protected routes
+    if (!isLoggedIn) {
+      const url = req.nextUrl.clone()
+      url.pathname = '/login'
+      return NextResponse.redirect(url)
+    }
+
+    // Admin routes
+    if (pathname.startsWith('/admin') && req.auth?.user?.role !== 'ADMIN') {
+      const url = req.nextUrl.clone()
+      url.pathname = '/dashboard'
+      return NextResponse.redirect(url)
+    }
+
     return NextResponse.next()
-  }
-
-  // Protected routes
-  if (!isLoggedIn) {
+  } catch (error) {
+    console.error('Middleware error:', error)
     const url = req.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
-
-  // Admin routes
-  if (pathname.startsWith('/admin') && req.auth?.user?.role !== 'ADMIN') {
-    const url = req.nextUrl.clone()
-    url.pathname = '/dashboard'
-    return NextResponse.redirect(url)
-  }
-
-  return NextResponse.next()
 })
 
 export const config = {
