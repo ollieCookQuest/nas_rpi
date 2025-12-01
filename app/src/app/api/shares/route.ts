@@ -31,11 +31,37 @@ export async function POST(request: NextRequest) {
       return unauthorizedResponse()
     }
 
-    const { fileId, folderId, isPublic, expiresAt, password } = await request.json()
+    const { filePath, folderPath, isPublic, expiresAt, password } = await request.json()
 
-    if (!fileId && !folderId) {
+    // Find file or folder by path
+    let fileId: string | null = null
+    let folderId: string | null = null
+
+    if (filePath) {
+      const file = await prisma.file.findFirst({
+        where: {
+          ownerId: session.user.id,
+          path: filePath,
+        },
+      })
+      if (!file) {
+        return NextResponse.json({ error: 'File not found' }, { status: 404 })
+      }
+      fileId = file.id
+    } else if (folderPath) {
+      const folder = await prisma.folder.findFirst({
+        where: {
+          ownerId: session.user.id,
+          path: folderPath,
+        },
+      })
+      if (!folder) {
+        return NextResponse.json({ error: 'Folder not found' }, { status: 404 })
+      }
+      folderId = folder.id
+    } else {
       return NextResponse.json(
-        { error: 'Either fileId or folderId is required' },
+        { error: 'Either filePath or folderPath is required' },
         { status: 400 }
       )
     }
@@ -62,14 +88,17 @@ export async function POST(request: NextRequest) {
       { shareId: share.id, fileId, folderId }
     )
 
+    const baseUrl = process.env.NEXTAUTH_URL || process.env.AUTH_URL || 'http://localhost:3000'
+
     return NextResponse.json({
       message: 'Share created successfully',
       share: {
         id: share.id,
         token: share.token,
-        url: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/share/${share.token}`,
+        url: `${baseUrl}/share/${share.token}`,
         expiresAt: share.expiresAt,
         isPublic: share.isPublic,
+        hasPassword: !!share.password,
       },
     })
   } catch (error) {

@@ -241,26 +241,34 @@ export default function FileBrowser({ currentPath = '' }: FileBrowserProps) {
     if (!shareDialog.item) return
 
     try {
-      // For now, create a simple share
-      // We'll need file/folder IDs from the database
+      const shareData: any = {
+        isPublic: true,
+      }
+
+      if (shareDialog.item.type === 'file') {
+        shareData.filePath = shareDialog.item.path
+      } else {
+        shareData.folderPath = shareDialog.item.path
+      }
+
       const response = await fetch('/api/shares', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          // fileId or folderId would need to be fetched first
-          isPublic: true,
-        }),
+        body: JSON.stringify(shareData),
       })
 
-      if (!response.ok) throw new Error('Share creation failed')
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Share creation failed')
+      }
       
       const data = await response.json()
-      navigator.clipboard.writeText(data.share.url)
+      await navigator.clipboard.writeText(data.share.url)
       alert('Share link copied to clipboard!')
       setShareDialog({ open: false, item: null })
-    } catch (error) {
+    } catch (error: any) {
       console.error('Share error:', error)
-      alert('Failed to create share')
+      alert(error.message || 'Failed to create share')
     }
   }
 
@@ -494,7 +502,8 @@ export default function FileBrowser({ currentPath = '' }: FileBrowserProps) {
                         <Edit className="h-4 w-4 mr-2" />
                         Rename
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => {
+                      <DropdownMenuItem onClick={(e) => {
+                        e.stopPropagation()
                         setShareDialog({ open: true, item: { path: file.path, name: file.name, type: 'file' } })
                       }}>
                         <Share2 className="h-4 w-4 mr-2" />
