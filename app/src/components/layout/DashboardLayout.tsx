@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { signOut } from 'next-auth/react'
 import { 
   Home, 
   Folder, 
@@ -54,7 +55,7 @@ export default function DashboardLayout({ children, user }: DashboardLayoutProps
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const handleLogout = async () => {
-    await nextAuthSignOut({ callbackUrl: '/login' })
+    await signOut({ callbackUrl: '/login' })
   }
 
   const isAdmin = user?.role === 'ADMIN'
