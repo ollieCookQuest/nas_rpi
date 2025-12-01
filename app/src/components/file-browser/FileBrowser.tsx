@@ -1,7 +1,25 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Folder, File, Upload, Download, Trash2, Plus, Loader2, Eye } from 'lucide-react'
+import { 
+  Folder, 
+  File, 
+  Upload, 
+  Download, 
+  Trash2, 
+  Plus, 
+  Loader2, 
+  Eye,
+  Share2,
+  MoreVertical,
+  Grid3x3,
+  List,
+  Copy,
+  Move,
+  Edit,
+  ChevronRight,
+  Home as HomeIcon
+} from 'lucide-react'
 import MediaViewer from '@/components/media-player/MediaViewer'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -14,8 +32,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { cn } from '@/lib/utils'
 
 interface FileItem {
   name: string
@@ -35,14 +62,21 @@ interface FileBrowserProps {
   currentPath?: string
 }
 
+type ViewMode = 'grid' | 'list'
+
 export default function FileBrowser({ currentPath = '' }: FileBrowserProps) {
   const [files, setFiles] = useState<FileItem[]>([])
   const [folders, setFolders] = useState<FolderItem[]>([])
   const [path, setPath] = useState(currentPath)
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
+  const [viewMode, setViewMode] = useState<ViewMode>('grid')
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set())
   const [newFolderName, setNewFolderName] = useState('')
   const [showNewFolderDialog, setShowNewFolderDialog] = useState(false)
+  const [renameDialog, setRenameDialog] = useState<{ open: boolean; item: { path: string; name: string; type: 'file' | 'folder' } | null }>({ open: false, item: null })
+  const [renameName, setRenameName] = useState('')
+  const [shareDialog, setShareDialog] = useState<{ open: boolean; item: { path: string; name: string; type: 'file' | 'folder' } | null }>({ open: false, item: null })
   const [mediaViewer, setMediaViewer] = useState<{
     src: string
     type: 'image' | 'video' | 'audio'
@@ -58,6 +92,7 @@ export default function FileBrowser({ currentPath = '' }: FileBrowserProps) {
       setFiles(data.files || [])
       setFolders(data.folders || [])
       setPath(data.path || '')
+      setSelectedItems(new Set())
     } catch (error) {
       console.error('Error loading files:', error)
     } finally {
@@ -74,26 +109,30 @@ export default function FileBrowser({ currentPath = '' }: FileBrowserProps) {
   }
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
+    const filesList = event.target.files
+    if (!filesList || filesList.length === 0) return
 
     setUploading(true)
     try {
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('path', path)
+      const uploadPromises = Array.from(filesList).map(async (file) => {
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('path', path)
 
-      const response = await fetch('/api/files/upload', {
-        method: 'POST',
-        body: formData,
+        const response = await fetch('/api/files/upload', {
+          method: 'POST',
+          body: formData,
+        })
+
+        if (!response.ok) throw new Error(`Upload failed for ${file.name}`)
+        return response.json()
       })
 
-      if (!response.ok) throw new Error('Upload failed')
-      
+      await Promise.all(uploadPromises)
       await loadFiles(path)
     } catch (error) {
       console.error('Upload error:', error)
-      alert('Failed to upload file')
+      alert('Failed to upload file(s)')
     } finally {
       setUploading(false)
       event.target.value = ''
@@ -152,6 +191,31 @@ export default function FileBrowser({ currentPath = '' }: FileBrowserProps) {
     }
   }
 
+  const handleRename = async () => {
+    if (!renameDialog.item || !renameName.trim()) return
+
+    try {
+      const response = await fetch('/api/files/rename', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          oldPath: renameDialog.item.path,
+          newName: renameName.trim(),
+          type: renameDialog.item.type,
+        }),
+      })
+
+      if (!response.ok) throw new Error('Rename failed')
+      
+      setRenameDialog({ open: false, item: null })
+      setRenameName('')
+      await loadFiles(path)
+    } catch (error) {
+      console.error('Rename error:', error)
+      alert('Failed to rename item')
+    }
+  }
+
   const handleCreateFolder = async () => {
     if (!newFolderName.trim()) return
 
@@ -173,32 +237,99 @@ export default function FileBrowser({ currentPath = '' }: FileBrowserProps) {
     }
   }
 
+  const handleShare = async () => {
+    if (!shareDialog.item) return
+
+    try {
+      // For now, create a simple share
+      // We'll need file/folder IDs from the database
+      const response = await fetch('/api/shares', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          // fileId or folderId would need to be fetched first
+          isPublic: true,
+        }),
+      })
+
+      if (!response.ok) throw new Error('Share creation failed')
+      
+      const data = await response.json()
+      navigator.clipboard.writeText(data.share.url)
+      alert('Share link copied to clipboard!')
+      setShareDialog({ open: false, item: null })
+    } catch (error) {
+      console.error('Share error:', error)
+      alert('Failed to create share')
+    }
+  }
+
+  const toggleSelection = (itemPath: string) => {
+    const newSelected = new Set(selectedItems)
+    if (newSelected.has(itemPath)) {
+      newSelected.delete(itemPath)
+    } else {
+      newSelected.add(itemPath)
+    }
+    setSelectedItems(newSelected)
+  }
+
   const breadcrumbs = path.split('/').filter(Boolean)
+
+  const getFileIcon = (mimeType?: string) => {
+    if (!mimeType) return File
+    if (mimeType.startsWith('image/')) return File
+    if (mimeType.startsWith('video/')) return File
+    if (mimeType.startsWith('audio/')) return File
+    return File
+  }
 
   return (
     <div className="space-y-4">
+      {/* Toolbar */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        {/* Breadcrumbs */}
+        <div className="flex items-center gap-1 text-sm">
           <button
             onClick={() => loadFiles('')}
-            className="hover:text-foreground"
+            className="flex items-center gap-1 px-2 py-1 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
           >
-            Home
+            <HomeIcon className="h-4 w-4" />
           </button>
           {breadcrumbs.map((crumb, index) => (
-            <span key={index}>
-              <span className="mx-2">/</span>
+            <div key={index} className="flex items-center gap-1">
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
               <button
                 onClick={() => loadFiles(breadcrumbs.slice(0, index + 1).join('/'))}
-                className="hover:text-foreground"
+                className="px-2 py-1 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors truncate max-w-[150px]"
               >
                 {crumb}
               </button>
-            </span>
+            </div>
           ))}
         </div>
 
-        <div className="flex gap-2">
+        {/* Actions */}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 border rounded-lg p-1">
+            <Button
+              variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('grid')}
+              className="h-8 w-8 p-0"
+            >
+              <Grid3x3 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('list')}
+              className="h-8 w-8 p-0"
+            >
+              <List className="h-4 w-4" />
+            </Button>
+          </div>
+
           <Dialog open={showNewFolderDialog} onOpenChange={setShowNewFolderDialog}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm">
@@ -237,6 +368,7 @@ export default function FileBrowser({ currentPath = '' }: FileBrowserProps) {
           <label>
             <input
               type="file"
+              multiple
               className="hidden"
               onChange={handleFileUpload}
               disabled={uploading}
@@ -255,80 +387,133 @@ export default function FileBrowser({ currentPath = '' }: FileBrowserProps) {
         </div>
       </div>
 
+      {/* File List */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
-      ) : (
+      ) : viewMode === 'grid' ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {folders.map((folder) => (
-            <Card key={folder.path} className="p-4 hover:bg-accent transition-colors">
+            <Card 
+              key={folder.path} 
+              className={cn(
+                "p-4 hover:bg-accent transition-colors cursor-pointer group relative",
+                selectedItems.has(folder.path) && "ring-2 ring-primary"
+              )}
+              onClick={() => handleFolderClick(folder.path)}
+            >
               <div className="flex items-start justify-between">
-                <button
-                  onClick={() => handleFolderClick(folder.path)}
-                  className="flex-1 text-left"
-                >
-                  <Folder className="h-8 w-8 text-primary mb-2" />
+                <div className="flex-1 min-w-0">
+                  <Folder className="h-10 w-10 text-primary mb-2" />
                   <p className="font-medium truncate">{folder.name}</p>
                   <p className="text-xs text-muted-foreground mt-1">
                     {formatDate(folder.createdAt)}
                   </p>
-                </button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => handleDelete(folder.path, 'folder')}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={(e) => {
+                      e.stopPropagation()
+                      setRenameDialog({ open: true, item: { path: folder.path, name: folder.name, type: 'folder' } })
+                      setRenameName(folder.name)
+                    }}>
+                      <Edit className="h-4 w-4 mr-2" />
+                      Rename
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={(e) => {
+                      e.stopPropagation()
+                      setShareDialog({ open: true, item: { path: folder.path, name: folder.name, type: 'folder' } })
+                    }}>
+                      <Share2 className="h-4 w-4 mr-2" />
+                      Share
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleDelete(folder.path, 'folder')
+                      }}
+                      className="text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </Card>
           ))}
 
-          {files.map((file) => (
-            <Card key={file.path} className="p-4 hover:bg-accent transition-colors">
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0">
-                  <File className="h-8 w-8 text-muted-foreground mb-2" />
-                  <p className="font-medium truncate">{file.name}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {file.size ? formatBytes(file.size) : 'Unknown size'}
-                  </p>
+          {files.map((file) => {
+            const FileIcon = getFileIcon(file.mimeType)
+            return (
+              <Card 
+                key={file.path} 
+                className={cn(
+                  "p-4 hover:bg-accent transition-colors group relative",
+                  selectedItems.has(file.path) && "ring-2 ring-primary"
+                )}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 min-w-0">
+                    <FileIcon className="h-10 w-10 text-muted-foreground mb-2" />
+                    <p className="font-medium truncate">{file.name}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {file.size ? formatBytes(file.size) : 'Unknown size'}
+                    </p>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      {(file.mimeType?.startsWith('image/') || 
+                        file.mimeType?.startsWith('video/') || 
+                        file.mimeType?.startsWith('audio/')) && (
+                        <DropdownMenuItem onClick={() => handlePreview(file)}>
+                          <Eye className="h-4 w-4 mr-2" />
+                          Preview
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuItem onClick={() => handleDownload(file.path)}>
+                        <Download className="h-4 w-4 mr-2" />
+                        Download
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => {
+                        setRenameDialog({ open: true, item: { path: file.path, name: file.name, type: 'file' } })
+                        setRenameName(file.name)
+                      }}>
+                        <Edit className="h-4 w-4 mr-2" />
+                        Rename
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => {
+                        setShareDialog({ open: true, item: { path: file.path, name: file.name, type: 'file' } })
+                      }}>
+                        <Share2 className="h-4 w-4 mr-2" />
+                        Share
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem 
+                        onClick={() => handleDelete(file.path, 'file')}
+                        className="text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
-                <div className="flex gap-1">
-                  {(file.mimeType?.startsWith('image/') || 
-                    file.mimeType?.startsWith('video/') || 
-                    file.mimeType?.startsWith('audio/')) && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => handlePreview(file)}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => handleDownload(file.path)}
-                  >
-                    <Download className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => handleDelete(file.path, 'file')}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          ))}
+              </Card>
+            )
+          })}
 
           {folders.length === 0 && files.length === 0 && (
             <div className="col-span-full text-center py-12 text-muted-foreground">
@@ -336,8 +521,181 @@ export default function FileBrowser({ currentPath = '' }: FileBrowserProps) {
             </div>
           )}
         </div>
+      ) : (
+        <Card>
+          <div className="divide-y">
+            {folders.map((folder) => (
+              <div
+                key={folder.path}
+                className="flex items-center gap-4 p-4 hover:bg-accent transition-colors cursor-pointer group"
+                onClick={() => handleFolderClick(folder.path)}
+              >
+                <Folder className="h-5 w-5 text-primary flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium truncate">{folder.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatDate(folder.createdAt)}
+                  </p>
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={(e) => {
+                      e.stopPropagation()
+                      setRenameDialog({ open: true, item: { path: folder.path, name: folder.name, type: 'folder' } })
+                      setRenameName(folder.name)
+                    }}>
+                      <Edit className="h-4 w-4 mr-2" />
+                      Rename
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={(e) => {
+                      e.stopPropagation()
+                      setShareDialog({ open: true, item: { path: folder.path, name: folder.name, type: 'folder' } })
+                    }}>
+                      <Share2 className="h-4 w-4 mr-2" />
+                      Share
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleDelete(folder.path, 'folder')
+                      }}
+                      className="text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            ))}
+
+            {files.map((file) => {
+              const FileIcon = getFileIcon(file.mimeType)
+              return (
+                <div
+                  key={file.path}
+                  className="flex items-center gap-4 p-4 hover:bg-accent transition-colors group"
+                >
+                  <FileIcon className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">{file.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {file.size ? formatBytes(file.size) : 'Unknown size'} • {formatDate(file.createdAt)}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {(file.mimeType?.startsWith('image/') || 
+                      file.mimeType?.startsWith('video/') || 
+                      file.mimeType?.startsWith('audio/')) && (
+                      <Button variant="ghost" size="icon" onClick={() => handlePreview(file)}>
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    )}
+                    <Button variant="ghost" size="icon" onClick={() => handleDownload(file.path)}>
+                      <Download className="h-4 w-4" />
+                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => {
+                          setRenameDialog({ open: true, item: { path: file.path, name: file.name, type: 'file' } })
+                          setRenameName(file.name)
+                        }}>
+                          <Edit className="h-4 w-4 mr-2" />
+                          Rename
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => {
+                          setShareDialog({ open: true, item: { path: file.path, name: file.name, type: 'file' } })
+                        }}>
+                          <Share2 className="h-4 w-4 mr-2" />
+                          Share
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem 
+                          onClick={() => handleDelete(file.path, 'file')}
+                          className="text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+              )
+            })}
+
+            {folders.length === 0 && files.length === 0 && (
+              <div className="text-center py-12 text-muted-foreground">
+                No files or folders. Upload a file or create a folder to get started.
+              </div>
+            )}
+          </div>
+        </Card>
       )}
 
+      {/* Rename Dialog */}
+      <Dialog open={renameDialog.open} onOpenChange={(open) => setRenameDialog({ open, item: null })}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rename {renameDialog.item?.type}</DialogTitle>
+            <DialogDescription>Enter a new name</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="rename-name">Name</Label>
+              <Input
+                id="rename-name"
+                value={renameName}
+                onChange={(e) => setRenameName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleRename()
+                }}
+                autoFocus
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setRenameDialog({ open: false, item: null })}>
+                Cancel
+              </Button>
+              <Button onClick={handleRename}>Rename</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Share Dialog */}
+      <Dialog open={shareDialog.open} onOpenChange={(open) => setShareDialog({ open, item: null })}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Share {shareDialog.item?.name}</DialogTitle>
+            <DialogDescription>Create a shareable link</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShareDialog({ open: false, item: null })}>
+                Cancel
+              </Button>
+              <Button onClick={handleShare}>
+                <Share2 className="h-4 w-4 mr-2" />
+                Create Share Link
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Media Viewer */}
       {mediaViewer && (
         <MediaViewer
           src={mediaViewer.src}
@@ -350,4 +708,3 @@ export default function FileBrowser({ currentPath = '' }: FileBrowserProps) {
     </div>
   )
 }
-

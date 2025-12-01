@@ -14,7 +14,8 @@ import {
   LogOut,
   HardDrive,
   Menu,
-  X
+  X,
+  Share2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -40,6 +41,7 @@ interface DashboardLayoutProps {
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
   { name: 'Files', href: '/dashboard/files', icon: Folder },
+  { name: 'Shares', href: '/dashboard/shares', icon: Share2 },
   { name: 'Search', href: '/dashboard/search', icon: Search },
   { name: 'Activity', href: '/dashboard/activity', icon: Activity },
 ]
@@ -152,10 +154,17 @@ function SidebarContent({
 }) {
   return (
     <div className="flex h-full flex-col">
-      <div className="flex h-16 items-center border-b px-6">
-        <Link href="/dashboard" onClick={onLinkClick} className="flex items-center gap-2">
-          <HardDrive className="h-6 w-6 text-primary" />
-          <span className="text-lg font-bold">NAS System</span>
+      <div className="flex h-16 items-center border-b px-6 bg-gradient-to-r from-primary/10 to-transparent">
+        <Link href="/dashboard" onClick={onLinkClick} className="flex items-center gap-2 group">
+          <div className="relative">
+            <HardDrive className="h-7 w-7 text-primary transition-transform group-hover:scale-110" />
+          </div>
+          <div>
+            <span className="text-lg font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              UniFi Drive
+            </span>
+            <p className="text-xs text-muted-foreground">NAS System</p>
+          </div>
         </Link>
       </div>
 
