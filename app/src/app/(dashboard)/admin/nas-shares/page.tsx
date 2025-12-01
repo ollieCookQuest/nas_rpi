@@ -95,17 +95,7 @@ export default function NasSharesPage() {
         return
       }
 
-      setFormData({
-        name: '',
-        path: '',
-        protocol: 'NFS',
-        permissions: 'READ_WRITE',
-        description: '',
-        allowedIPs: '',
-        enabled: true,
-      })
-      setEditingShare(null)
-      setShowDialog(false)
+      resetForm()
       await loadShares()
     } catch (error) {
       console.error('Error saving NAS share:', error)
@@ -195,9 +185,14 @@ export default function NasSharesPage() {
           <p className="text-muted-foreground">Manage network file shares (NFS/SMB)</p>
         </div>
 
-        <Dialog open={showDialog} onOpenChange={(open) => !open && resetForm()}>
+        <Dialog open={showDialog} onOpenChange={(open) => {
+          setShowDialog(open)
+          if (!open) {
+            resetForm()
+          }
+        }}>
           <DialogTrigger asChild>
-            <Button className="btn-unifi" onClick={() => resetForm()}>
+            <Button className="btn-unifi" onClick={() => setShowDialog(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Create Share
             </Button>
@@ -297,7 +292,10 @@ export default function NasSharesPage() {
               </div>
 
               <div className="flex justify-end gap-2 pt-4">
-                <Button variant="outline" onClick={resetForm}>
+                <Button variant="outline" onClick={() => {
+                  setShowDialog(false)
+                  resetForm()
+                }}>
                   Cancel
                 </Button>
                 <Button onClick={handleCreateOrUpdate} disabled={submitting || !formData.name || !formData.path} className="btn-unifi">
