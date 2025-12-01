@@ -40,6 +40,8 @@ services:
       - UPLOAD_MAX_SIZE=${UPLOAD_MAX_SIZE:-10737418240}
     volumes:
       - app_data:/data/storage
+      - nfs_config:/shared/nfs
+      - smb_config:/shared/smb
       - ./app:/app
       - /app/node_modules
       - /app/.next
@@ -50,13 +52,58 @@ services:
         condition: service_healthy
     platform: linux/arm64
 
+  nfs-server:
+    image: itsthenetwork/nfs-server-alpine:latest
+    container_name: nas_nfs_server
+    restart: unless-stopped
+    privileged: true
+    ports:
+      - "2049:2049"     # NFS
+      - "2049:2049/udp" # NFS UDP
+      - "111:111"       # Portmapper
+      - "111:111/udp"   # Portmapper UDP
+    environment:
+      - SHARED_DIRECTORY=/data/storage
+    volumes:
+      - app_data:/data/storage
+      - nfs_config:/shared
+      - ./scripts/nfs-watch.sh:/nfs-watch.sh
+    networks:
+      - nas_network
+    entrypoint: /bin/sh
+    command: -c "chmod +x /nfs-watch.sh && mkdir -p /shared/nfs && /nfs-watch.sh & /entrypoint.sh"
+    platform: linux/arm64
+
+  samba:
+    image: dperson/samba:latest
+    container_name: nas_samba_server
+    restart: unless-stopped
+    ports:
+      - "139:139"   # SMB
+      - "445:445"   # SMB
+    environment:
+      - TZ=UTC
+      - WORKGROUP=WORKGROUP
+    volumes:
+      - app_data:/data
+      - smb_config:/shared
+      - ./scripts/smb-watch.sh:/smb-watch.sh
+    networks:
+      - nas_network
+    entrypoint: /bin/sh
+    command: -c "chmod +x /smb-watch.sh && mkdir -p /shared/smb && /smb-watch.sh & /entrypoint.sh"
+    platform: linux/arm64
+
 volumes:
   postgres_data:
     driver: local
   app_data:
     driver: local
+  nfs_exports:
+    driver: local
+  smb_config:
+    driver: local
 
 networks:
   nas_network:
     driver: bridge
-

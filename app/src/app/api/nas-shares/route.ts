@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSession, unauthorizedResponse } from '@/lib/api-helpers'
 import { prisma } from '@/lib/prisma'
 import { logActivity, ActivityType } from '@/lib/storage'
+import { syncNASShares } from '@/lib/nas-sync'
 import { existsSync, statSync } from 'fs'
 import path from 'path'
 
@@ -99,6 +100,16 @@ export async function POST(request: NextRequest) {
       `Created NAS share: ${name} (${protocol || 'NFS'})`,
       { shareId: share.id, path: fullPath }
     )
+
+    // Sync shares to NFS/SMB servers (if enabled)
+    if (enabled !== false) {
+      try {
+        await syncNASShares()
+      } catch (error) {
+        console.warn('Error syncing NAS shares to servers:', error)
+        // Don't fail the request if sync fails
+      }
+    }
 
     return NextResponse.json({
       message: 'NAS share created successfully',

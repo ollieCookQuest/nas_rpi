@@ -97,6 +97,19 @@ export default function NasSharesPage() {
 
       resetForm()
       await loadShares()
+      
+      // Sync shares to NFS/SMB servers
+      try {
+        const response = await fetch('/api/nas-shares/sync', {
+          method: 'POST',
+        })
+        if (response.ok) {
+          const data = await response.json()
+          console.log('Shares synced:', data)
+        }
+      } catch (error) {
+        console.warn('Failed to sync shares:', error)
+      }
     } catch (error) {
       console.error('Error saving NAS share:', error)
       alert('Failed to save NAS share')

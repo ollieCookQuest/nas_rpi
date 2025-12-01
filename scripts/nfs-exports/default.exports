@@ -1,0 +1,4 @@
+# Default NFS export
+# Individual shares will be configured here
+/data *(rw,sync,no_subtree_check,no_root_squash)
+

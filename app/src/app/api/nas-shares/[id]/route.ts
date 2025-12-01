@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSession, unauthorizedResponse } from '@/lib/api-helpers'
 import { prisma } from '@/lib/prisma'
 import { logActivity, ActivityType } from '@/lib/storage'
+import { syncNASShares } from '@/lib/nas-sync'
 import { existsSync, statSync } from 'fs'
 import path from 'path'
 
@@ -105,6 +106,15 @@ export async function PUT(
       { shareId: share.id }
     )
 
+    // Sync shares to NFS/SMB servers if enabled
+    if (share.enabled) {
+      try {
+        await syncNASShares()
+      } catch (error) {
+        console.warn('Error syncing NAS shares to servers:', error)
+      }
+    }
+
     return NextResponse.json({
       message: 'NAS share updated successfully',
       share,
@@ -155,6 +165,13 @@ export async function DELETE(
       `Deleted NAS share: ${share.name}`,
       { shareId: share.id }
     )
+
+    // Sync shares to NFS/SMB servers after deletion
+    try {
+      await syncNASShares()
+    } catch (error) {
+      console.warn('Error syncing NAS shares to servers:', error)
+    }
 
     return NextResponse.json({ message: 'NAS share deleted successfully' })
   } catch (error) {
