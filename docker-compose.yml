@@ -99,7 +99,7 @@ volumes:
     driver: local
   app_data:
     driver: local
-  nfs_exports:
+  nfs_config:
     driver: local
   smb_config:
     driver: local
