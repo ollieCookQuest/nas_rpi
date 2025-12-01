@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       ActivityType.USER_UPDATE,
       'User logged in',
       {},
-      request.headers.get('x-forwarded-for') || request.ip,
+      request.headers.get('x-forwarded-for') || undefined,
       request.headers.get('user-agent') || undefined
     )
 
