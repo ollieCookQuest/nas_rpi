@@ -1,5 +1,4 @@
-import { cookies } from 'next/headers'
-import { verifyToken } from '@/lib/auth'
+import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
 
 export default async function AdminLayout({
@@ -7,11 +6,9 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
-  const cookieStore = await cookies()
-  const token = cookieStore.get('auth-token')?.value
-  const payload = verifyToken(token || '')
+  const session = await auth()
 
-  if (!payload || payload.role !== 'ADMIN') {
+  if (!session?.user || session.user.role !== 'ADMIN') {
     redirect('/dashboard')
   }
 

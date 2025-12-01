@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import { verifyToken } from '@/lib/auth'
+import { getSession, unauthorizedResponse } from '@/lib/api-helpers'
 import { getUserFilePath, ensureDirectory } from '@/lib/storage'
 import { prisma } from '@/lib/prisma'
 import { logActivity, ActivityType } from '@/lib/storage'
@@ -9,12 +8,9 @@ import path from 'path'
 
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = await cookies()
-    const token = cookieStore.get('auth-token')?.value
-    const payload = verifyToken(token || '')
-
-    if (!payload) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const session = await getSession()
+    if (!session) {
+      return unauthorizedResponse()
     }
 
     const formData = await request.formData()
@@ -25,7 +21,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
-    const userStoragePath = getUserFilePath(payload.userId, folderPath)
+    const userStoragePath = getUserFilePath(session.user.id, folderPath)
     await ensureDirectory(userStoragePath)
 
     const filePath = path.join(userStoragePath, file.name)
@@ -35,19 +31,19 @@ export async function POST(request: NextRequest) {
     await writeFile(filePath, buffer)
 
     // Save file record to database
-    const relativePath = path.relative(getUserFilePath(payload.userId, ''), filePath)
+    const relativePath = path.relative(getUserFilePath(session.user.id, ''), filePath)
     const dbFile = await prisma.file.create({
       data: {
         filename: file.name,
         path: relativePath,
         mimeType: file.type || 'application/octet-stream',
         size: buffer.length,
-        ownerId: payload.userId,
+        ownerId: session.user.id,
       },
     })
 
     await logActivity(
-      payload.userId,
+      session.user.id,
       ActivityType.FILE_UPLOAD,
       `Uploaded file: ${file.name}`,
       { fileId: dbFile.id, size: buffer.length }

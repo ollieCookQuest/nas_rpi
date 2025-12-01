@@ -1,16 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import { verifyToken } from '@/lib/auth'
+import { getSession, unauthorizedResponse } from '@/lib/api-helpers'
 import { prisma } from '@/lib/prisma'
 
 export async function GET(request: NextRequest) {
   try {
-    const cookieStore = await cookies()
-    const token = cookieStore.get('auth-token')?.value
-    const payload = verifyToken(token || '')
-
-    if (!payload) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const session = await getSession()
+    if (!session) {
+      return unauthorizedResponse()
     }
 
     const { searchParams } = new URL(request.url)
@@ -30,7 +26,7 @@ export async function GET(request: NextRequest) {
     if (type === 'all' || type === 'file') {
       files = await prisma.file.findMany({
         where: {
-          ownerId: payload.userId,
+          ownerId: session.user.id,
           filename: {
             contains: searchTerm,
             mode: 'insensitive',
@@ -44,7 +40,7 @@ export async function GET(request: NextRequest) {
     if (type === 'all' || type === 'folder') {
       folders = await prisma.folder.findMany({
         where: {
-          ownerId: payload.userId,
+          ownerId: session.user.id,
           name: {
             contains: searchTerm,
             mode: 'insensitive',

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { signIn } from 'next-auth/react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -21,28 +22,24 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
       })
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        setError(data.error || 'Login failed')
+      if (result?.error) {
+        setError('Invalid email or password')
         setLoading(false)
         return
       }
 
-      // Wait a bit for cookie to be set
-      await new Promise(resolve => setTimeout(resolve, 100))
-      
-      // Force a full page navigation to ensure middleware runs
-      window.location.href = '/dashboard'
+      if (result?.ok) {
+        router.push('/dashboard')
+        router.refresh()
+      }
     } catch (err) {
       setError('An error occurred. Please try again.')
-    } finally {
       setLoading(false)
     }
   }

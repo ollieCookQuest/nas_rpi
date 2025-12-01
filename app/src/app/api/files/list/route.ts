@@ -1,24 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import { verifyToken } from '@/lib/auth'
+import { getSession, unauthorizedResponse } from '@/lib/api-helpers'
 import { getUserFilePath, listDirectory, getFileStats } from '@/lib/storage'
 import { prisma } from '@/lib/prisma'
 import path from 'path'
 
 export async function GET(request: NextRequest) {
   try {
-    const cookieStore = await cookies()
-    const token = cookieStore.get('auth-token')?.value
-    const payload = verifyToken(token || '')
-
-    if (!payload) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const session = await getSession()
+    if (!session) {
+      return unauthorizedResponse()
     }
 
     const { searchParams } = new URL(request.url)
     const folderPath = searchParams.get('path') || ''
 
-    const userStoragePath = getUserFilePath(payload.userId, folderPath)
+    const userStoragePath = getUserFilePath(session.user.id, folderPath)
     const stats = await getFileStats(userStoragePath)
 
     if (!stats || !stats.isDirectory) {
@@ -26,12 +22,12 @@ export async function GET(request: NextRequest) {
     }
 
     const entries = await listDirectory(userStoragePath)
-    const relativePath = path.relative(getUserFilePath(payload.userId, ''), userStoragePath) || '.'
+    const relativePath = path.relative(getUserFilePath(session.user.id, ''), userStoragePath) || '.'
 
     // Get database records for files and folders
     const dbFiles = await prisma.file.findMany({
       where: {
-        ownerId: payload.userId,
+        ownerId: session.user.id,
         path: {
           startsWith: relativePath === '.' ? '' : relativePath,
         },
@@ -40,7 +36,7 @@ export async function GET(request: NextRequest) {
 
     const dbFolders = await prisma.folder.findMany({
       where: {
-        ownerId: payload.userId,
+        ownerId: session.user.id,
         path: {
           startsWith: relativePath === '.' ? '' : relativePath,
         },

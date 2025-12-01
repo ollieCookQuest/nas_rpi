@@ -1,5 +1,4 @@
-import { cookies } from 'next/headers'
-import { verifyToken } from '@/lib/auth'
+import { auth } from '@/auth'
 import { getDiskUsage } from '@/lib/storage'
 import { prisma } from '@/lib/prisma'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -7,23 +6,21 @@ import { formatBytes } from '@/lib/utils'
 import { HardDrive, Folder, File, Activity as ActivityIcon } from 'lucide-react'
 
 export default async function DashboardPage() {
-  const cookieStore = await cookies()
-  const token = cookieStore.get('auth-token')?.value
-  const payload = verifyToken(token || '')
+  const session = await auth()
 
-  if (!payload) {
+  if (!session?.user) {
     return null
   }
 
-  const diskUsage = await getDiskUsage(payload.userId)
+  const diskUsage = await getDiskUsage(session.user.id)
   const fileCount = await prisma.file.count({
-    where: { ownerId: payload.userId },
+    where: { ownerId: session.user.id },
   })
   const folderCount = await prisma.folder.count({
-    where: { ownerId: payload.userId },
+    where: { ownerId: session.user.id },
   })
   const recentActivities = await prisma.activityLog.findMany({
-    where: { userId: payload.userId },
+    where: { userId: session.user.id },
     orderBy: { createdAt: 'desc' },
     take: 5,
   })

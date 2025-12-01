@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import { verifyToken } from '@/lib/auth'
+import { getSession, unauthorizedResponse } from '@/lib/api-helpers'
 import { getUserFilePath, deleteFile, getFileStats } from '@/lib/storage'
 import { prisma } from '@/lib/prisma'
 import { logActivity, ActivityType } from '@/lib/storage'
@@ -8,12 +7,9 @@ import path from 'path'
 
 export async function DELETE(request: NextRequest) {
   try {
-    const cookieStore = await cookies()
-    const token = cookieStore.get('auth-token')?.value
-    const payload = verifyToken(token || '')
-
-    if (!payload) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const session = await getSession()
+    if (!session) {
+      return unauthorizedResponse()
     }
 
     const { searchParams } = new URL(request.url)
@@ -24,7 +20,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Path required' }, { status: 400 })
     }
 
-    const fullPath = getUserFilePath(payload.userId, filePath)
+    const fullPath = getUserFilePath(session.user.id, filePath)
     const stats = await getFileStats(fullPath)
 
     if (!stats) {
@@ -35,31 +31,31 @@ export async function DELETE(request: NextRequest) {
     await deleteFile(fullPath)
 
     // Delete from database
-    const relativePath = path.relative(getUserFilePath(payload.userId, ''), fullPath)
+    const relativePath = path.relative(getUserFilePath(session.user.id, ''), fullPath)
     
     if (type === 'file') {
       await prisma.file.deleteMany({
         where: {
-          ownerId: payload.userId,
+          ownerId: session.user.id,
           path: relativePath,
         },
       })
       
       await logActivity(
-        payload.userId,
+        session.user.id,
         ActivityType.FILE_DELETE,
         `Deleted file: ${filePath}`
       )
     } else {
       await prisma.folder.deleteMany({
         where: {
-          ownerId: payload.userId,
+          ownerId: session.user.id,
           path: relativePath,
         },
       })
       
       await logActivity(
-        payload.userId,
+        session.user.id,
         ActivityType.FOLDER_DELETE,
         `Deleted folder: ${filePath}`
       )

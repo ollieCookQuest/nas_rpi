@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'File path required' }, { status: 400 })
     }
 
-    const fullPath = getUserFilePath(payload.userId, filePath)
+    const fullPath = getUserFilePath(session.user.id, filePath)
     const stats = await getFileStats(fullPath)
 
     if (!stats || !stats.isFile) {
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     const fileBuffer = await readFile(fullPath)
 
     await logActivity(
-      payload.userId,
+      session.user.id,
       ActivityType.FILE_DOWNLOAD,
       `Downloaded file: ${filePath}`,
       { path: filePath }

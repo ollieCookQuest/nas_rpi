@@ -1,16 +1,13 @@
-import { cookies } from 'next/headers'
-import { verifyToken } from '@/lib/auth'
+import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatBytes } from '@/lib/utils'
 import { HardDrive } from 'lucide-react'
 
 export default async function AdminStoragePage() {
-  const cookieStore = await cookies()
-  const token = cookieStore.get('auth-token')?.value
-  const payload = verifyToken(token || '')
+  const session = await auth()
 
-  if (!payload || payload.role !== 'ADMIN') {
+  if (!session?.user || session.user.role !== 'ADMIN') {
     return null
   }
 

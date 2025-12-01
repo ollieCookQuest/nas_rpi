@@ -1,26 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import { verifyToken } from '@/lib/auth'
+import { getSession, unauthorizedResponse } from '@/lib/api-helpers'
 import { prisma } from '@/lib/prisma'
 
 export async function GET(request: NextRequest) {
   try {
-    const cookieStore = await cookies()
-    const token = cookieStore.get('auth-token')?.value
-    const payload = verifyToken(token || '')
-
-    if (!payload) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const session = await getSession()
+    if (!session) {
+      return unauthorizedResponse()
     }
 
     const { searchParams } = new URL(request.url)
     const limit = parseInt(searchParams.get('limit') || '50')
     const type = searchParams.get('type')
-    const allUsers = searchParams.get('all') === 'true' && payload.role === 'ADMIN'
+    const allUsers = searchParams.get('all') === 'true' && session.user.role === 'ADMIN'
 
     const where: any = {}
     if (!allUsers) {
-      where.userId = payload.userId
+      where.userId = session.user.id
     }
     if (type) {
       where.type = type

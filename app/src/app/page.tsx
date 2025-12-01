@@ -1,12 +1,10 @@
 import { redirect } from 'next/navigation'
-import { cookies } from 'next/headers'
-import { verifyToken } from '@/lib/auth'
+import { auth } from '@/auth'
 
 export default async function Home() {
-  const cookieStore = await cookies()
-  const token = cookieStore.get('auth-token')?.value
+  const session = await auth()
   
-  if (token && verifyToken(token)) {
+  if (session?.user) {
     redirect('/dashboard')
   }
   
