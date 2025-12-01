@@ -1,64 +1,78 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Settings, HardDrive, Info } from 'lucide-react'
 
-// Force dynamic rendering
 export const dynamic = 'force-dynamic'
 
 export default function AdminSettingsPage() {
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">System Settings</h1>
+      {/* Page Header */}
+      <div className="space-y-1">
+        <h1 className="text-3xl font-semibold tracking-tight">System Settings</h1>
         <p className="text-muted-foreground">Configure system-wide settings</p>
       </div>
 
-      <Card>
+      {/* Storage Settings */}
+      <Card className="card-unifi">
         <CardHeader>
-          <CardTitle>Storage Settings</CardTitle>
+          <div className="flex items-center gap-2">
+            <HardDrive className="h-5 w-5 text-primary" />
+            <CardTitle>Storage Settings</CardTitle>
+          </div>
           <CardDescription>Configure storage paths and limits</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
+          <div className="space-y-2">
             <Label htmlFor="storage-path">Storage Path</Label>
             <Input
               id="storage-path"
               defaultValue={process.env.STORAGE_PATH || '/data/storage'}
               disabled
+              className="input-unifi"
             />
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-muted-foreground">
               Storage path is configured via environment variables
             </p>
           </div>
-          <div>
+          <div className="space-y-2">
             <Label htmlFor="max-upload">Max Upload Size</Label>
             <Input
               id="max-upload"
               defaultValue={process.env.UPLOAD_MAX_SIZE || '10737418240'}
               disabled
+              className="input-unifi"
             />
-            <p className="text-xs text-muted-foreground mt-1">
-              Maximum file upload size in bytes
+            <p className="text-xs text-muted-foreground">
+              Maximum file upload size in bytes (default: 10GB)
             </p>
           </div>
         </CardContent>
       </Card>
 
-      <Card>
+      {/* System Information */}
+      <Card className="card-unifi">
         <CardHeader>
-          <CardTitle>System Information</CardTitle>
-          <CardDescription>NAS system information</CardDescription>
+          <div className="flex items-center gap-2">
+            <Info className="h-5 w-5 text-primary" />
+            <CardTitle>System Information</CardTitle>
+          </div>
+          <CardDescription>NAS system information and version</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Version:</span>
-              <span>1.0.0</span>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between py-2 border-b border-border/50">
+              <span className="text-sm text-muted-foreground">Version</span>
+              <span className="text-sm font-medium">1.0.0</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Environment:</span>
-              <span>{process.env.NODE_ENV || 'production'}</span>
+            <div className="flex items-center justify-between py-2 border-b border-border/50">
+              <span className="text-sm text-muted-foreground">Environment</span>
+              <span className="text-sm font-medium">{process.env.NODE_ENV || 'production'}</span>
+            </div>
+            <div className="flex items-center justify-between py-2">
+              <span className="text-sm text-muted-foreground">Storage Path</span>
+              <span className="text-sm font-medium font-mono">{process.env.STORAGE_PATH || '/data/storage'}</span>
             </div>
           </div>
         </CardContent>
@@ -66,4 +80,3 @@ export default function AdminSettingsPage() {
     </div>
   )
 }
-

@@ -306,23 +306,31 @@ export default function FileBrowser({ currentPath = '' }: FileBrowserProps) {
   }
 
   return (
-    <div className="space-y-4">
-      {/* Toolbar */}
+    <div className="space-y-5">
+      {/* Page Header */}
       <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-semibold tracking-tight">Files</h1>
+          <p className="text-muted-foreground">Manage your files and folders</p>
+        </div>
+      </div>
+
+      {/* Toolbar */}
+      <div className="flex items-center justify-between gap-4">
         {/* Breadcrumbs */}
         <div className="flex items-center gap-1 text-sm">
           <button
             onClick={() => loadFiles('')}
-            className="flex items-center gap-1 px-2 py-1 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-md hover:bg-accent/50 text-muted-foreground hover:text-foreground transition-colors"
           >
             <HomeIcon className="h-4 w-4" />
           </button>
           {breadcrumbs.map((crumb, index) => (
             <div key={index} className="flex items-center gap-1">
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
               <button
                 onClick={() => loadFiles(breadcrumbs.slice(0, index + 1).join('/'))}
-                className="px-2 py-1 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors truncate max-w-[150px]"
+                className="px-2.5 py-1.5 rounded-md hover:bg-accent/50 text-muted-foreground hover:text-foreground transition-colors truncate max-w-[150px]"
               >
                 {crumb}
               </button>
@@ -332,7 +340,7 @@ export default function FileBrowser({ currentPath = '' }: FileBrowserProps) {
 
         {/* Actions */}
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 border rounded-lg p-1">
+          <div className="flex items-center gap-1 border border-border/50 rounded-md p-1 bg-card">
             <Button
               variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
               size="sm"
@@ -353,7 +361,7 @@ export default function FileBrowser({ currentPath = '' }: FileBrowserProps) {
 
           <Dialog open={showNewFolderDialog} onOpenChange={setShowNewFolderDialog}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="btn-unifi">
                 <Plus className="h-4 w-4 mr-2" />
                 New Folder
               </Button>
@@ -394,7 +402,7 @@ export default function FileBrowser({ currentPath = '' }: FileBrowserProps) {
               onChange={handleFileUpload}
               disabled={uploading}
             />
-            <Button variant="default" size="sm" disabled={uploading} asChild>
+            <Button variant="default" size="sm" disabled={uploading} className="btn-unifi" asChild>
               <span>
                 {uploading ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -419,17 +427,17 @@ export default function FileBrowser({ currentPath = '' }: FileBrowserProps) {
             <Card 
               key={folder.path} 
               className={cn(
-                "p-5 hover:bg-accent/50 hover:border-primary/30 transition-all duration-200 cursor-pointer group relative card-hover",
+                "p-4 cursor-pointer group relative card-unifi",
                 selectedItems.has(folder.path) && "ring-2 ring-primary border-primary/50"
               )}
               onClick={() => handleFolderClick(folder.path)}
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
-                  <div className="mb-3 p-2.5 rounded-lg bg-primary/10 w-fit group-hover:bg-primary/20 transition-colors">
-                    <Folder className="h-6 w-6 text-primary" />
+                  <div className="mb-3 p-2 rounded-md bg-primary/10 w-fit group-hover:bg-primary/20 transition-colors">
+                    <Folder className="h-5 w-5 text-primary" />
                   </div>
-                  <p className="font-semibold truncate mb-1">{folder.name}</p>
+                  <p className="font-medium truncate text-sm mb-1">{folder.name}</p>
                   <p className="text-xs text-muted-foreground">
                     {formatDate(folder.createdAt)}
                   </p>
@@ -479,16 +487,16 @@ export default function FileBrowser({ currentPath = '' }: FileBrowserProps) {
               <Card 
                 key={file.path} 
                 className={cn(
-                  "p-5 hover:bg-accent/50 hover:border-primary/30 transition-all duration-200 group relative card-hover",
+                  "p-4 group relative card-unifi",
                   selectedItems.has(file.path) && "ring-2 ring-primary border-primary/50"
                 )}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
-                    <div className="mb-3 p-2.5 rounded-lg bg-muted/50 w-fit group-hover:bg-muted transition-colors">
-                      <FileIcon className="h-6 w-6 text-muted-foreground" />
+                    <div className="mb-3 p-2 rounded-md bg-muted/30 w-fit group-hover:bg-muted/50 transition-colors">
+                      <FileIcon className="h-5 w-5 text-muted-foreground" />
                     </div>
-                    <p className="font-semibold truncate mb-1">{file.name}</p>
+                    <p className="font-medium truncate text-sm mb-1">{file.name}</p>
                     <p className="text-xs text-muted-foreground">
                       {file.size ? formatBytes(file.size) : 'Unknown size'}
                     </p>
@@ -553,12 +561,14 @@ export default function FileBrowser({ currentPath = '' }: FileBrowserProps) {
             {folders.map((folder) => (
               <div
                 key={folder.path}
-                className="flex items-center gap-4 p-4 hover:bg-accent/50 transition-colors cursor-pointer group border-l-2 border-transparent hover:border-primary/50"
+                className="flex items-center gap-3 p-3 hover:bg-accent/50 transition-colors cursor-pointer group"
                 onClick={() => handleFolderClick(folder.path)}
               >
-                <Folder className="h-5 w-5 text-primary flex-shrink-0" />
+                <div className="p-1.5 rounded-md bg-primary/10">
+                  <Folder className="h-4 w-4 text-primary" />
+                </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{folder.name}</p>
+                  <p className="text-sm font-medium truncate">{folder.name}</p>
                   <p className="text-xs text-muted-foreground">
                     {formatDate(folder.createdAt)}
                   </p>
@@ -604,13 +614,15 @@ export default function FileBrowser({ currentPath = '' }: FileBrowserProps) {
             {files.map((file) => {
               const FileIcon = getFileIcon(file.mimeType)
               return (
-              <div
-                key={file.path}
-                className="flex items-center gap-4 p-4 hover:bg-accent/50 transition-colors group border-l-2 border-transparent hover:border-primary/50"
-              >
-                  <FileIcon className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                <div
+                  key={file.path}
+                  className="flex items-center gap-3 p-3 hover:bg-accent/50 transition-colors group"
+                >
+                  <div className="p-1.5 rounded-md bg-muted/30">
+                    <FileIcon className="h-4 w-4 text-muted-foreground" />
+                  </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{file.name}</p>
+                    <p className="text-sm font-medium truncate">{file.name}</p>
                     <p className="text-xs text-muted-foreground">
                       {file.size ? formatBytes(file.size) : 'Unknown size'} • {formatDate(file.createdAt)}
                     </p>

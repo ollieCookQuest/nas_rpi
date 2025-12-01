@@ -1,10 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Users, Plus, Loader2, Trash2 } from 'lucide-react'
-
-// Force dynamic rendering
-export const dynamic = 'force-dynamic'
+import { Users, Plus, Loader2, Trash2, Shield, User as UserIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -102,15 +99,16 @@ export default function AdminUsersPage() {
 
   return (
     <div className="space-y-6">
+      {/* Page Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">User Management</h1>
-          <p className="text-muted-foreground">Manage system users</p>
+        <div className="space-y-1">
+          <h1 className="text-3xl font-semibold tracking-tight">User Management</h1>
+          <p className="text-muted-foreground">Manage system users and permissions</p>
         </div>
 
         <Dialog open={showDialog} onOpenChange={setShowDialog}>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="btn-unifi">
               <Plus className="h-4 w-4 mr-2" />
               Add User
             </Button>
@@ -128,6 +126,7 @@ export default function AdminUsersPage() {
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="input-unifi"
                 />
               </div>
               <div>
@@ -136,6 +135,7 @@ export default function AdminUsersPage() {
                   id="username"
                   value={formData.username}
                   onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                  className="input-unifi"
                 />
               </div>
               <div>
@@ -145,13 +145,14 @@ export default function AdminUsersPage() {
                   type="password"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className="input-unifi"
                 />
               </div>
               <div>
                 <Label htmlFor="role">Role</Label>
                 <select
                   id="role"
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm input-unifi"
                   value={formData.role}
                   onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                 >
@@ -163,7 +164,7 @@ export default function AdminUsersPage() {
                 <Button variant="outline" onClick={() => setShowDialog(false)}>
                   Cancel
                 </Button>
-                <Button onClick={handleCreateUser} disabled={submitting}>
+                <Button onClick={handleCreateUser} disabled={submitting} className="btn-unifi">
                   {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create'}
                 </Button>
               </div>
@@ -177,39 +178,58 @@ export default function AdminUsersPage() {
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        <Card>
+        <Card className="card-unifi">
           <CardHeader>
-            <CardTitle>Users</CardTitle>
-            <CardDescription>All system users</CardDescription>
+            <CardTitle>System Users</CardTitle>
+            <CardDescription>All users with access to the system</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {users.map((user) => (
-                <div
-                  key={user.id}
-                  className="flex items-center justify-between p-4 rounded-lg border hover:bg-accent"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                      <Users className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-medium">{user.username}</p>
-                      <p className="text-sm text-muted-foreground">{user.email}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {user.role} • Created {formatDate(user.createdAt)}
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDeleteUser(user.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+              {users.length === 0 ? (
+                <div className="text-center py-12">
+                  <Users className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+                  <p className="text-sm text-muted-foreground">No users found</p>
                 </div>
-              ))}
+              ) : (
+                users.map((user) => (
+                  <div
+                    key={user.id}
+                    className="flex items-center justify-between p-3 rounded-md hover:bg-accent/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 flex-shrink-0">
+                        {user.role === 'ADMIN' ? (
+                          <Shield className="h-5 w-5 text-primary" />
+                        ) : (
+                          <UserIcon className="h-5 w-5 text-primary" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium truncate">{user.username}</p>
+                          {user.role === 'ADMIN' && (
+                            <span className="px-2 py-0.5 text-xs rounded-md bg-primary/10 text-primary font-medium">
+                              Admin
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Created {formatDate(user.createdAt)}
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDeleteUser(user.id)}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))
+              )}
             </div>
           </CardContent>
         </Card>
@@ -217,4 +237,3 @@ export default function AdminUsersPage() {
     </div>
   )
 }
-

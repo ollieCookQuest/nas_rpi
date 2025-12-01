@@ -4,27 +4,27 @@
 
 @layer base {
   :root {
-    /* UniFi Drive inspired dark theme with vibrant purple/blue accents */
-    --background: 224 71% 4%;
-    --foreground: 213 31% 91%;
+    /* UniFi Drive Official Color Palette */
+    --background: 222 71% 4.5%;
+    --foreground: 210 20% 98%;
     --card: 224 71% 6%;
-    --card-foreground: 213 31% 91%;
+    --card-foreground: 210 20% 98%;
     --popover: 224 71% 6%;
-    --popover-foreground: 213 31% 91%;
-    --primary: 262 83% 58%; /* Vibrant purple like UniFi */
+    --popover-foreground: 210 20% 98%;
+    --primary: 262 83% 58%; /* UniFi Purple */
     --primary-foreground: 210 20% 98%;
-    --secondary: 215 28% 17%;
-    --secondary-foreground: 213 31% 91%;
-    --muted: 215 28% 17%;
+    --secondary: 215 28% 16.5%;
+    --secondary-foreground: 210 20% 98%;
+    --muted: 215 28% 16.5%;
     --muted-foreground: 217 11% 65%;
-    --accent: 215 28% 17%;
-    --accent-foreground: 213 31% 91%;
+    --accent: 215 28% 16.5%;
+    --accent-foreground: 210 20% 98%;
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 20% 98%;
-    --border: 215 28% 17%;
-    --input: 215 28% 17%;
+    --border: 215 28% 16.5%;
+    --input: 215 28% 16.5%;
     --ring: 262 83% 58%;
-    --radius: 0.5rem;
+    --radius: 0.375rem;
   }
 }
 
@@ -32,6 +32,11 @@
   * {
     @apply border-border;
   }
+  
+  html {
+    @apply antialiased;
+  }
+  
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
@@ -40,14 +45,14 @@
     -moz-osx-font-smoothing: grayscale;
   }
   
-  /* UniFi Drive style scrollbar */
+  /* UniFi Drive scrollbar */
   ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
   }
   
   ::-webkit-scrollbar-track {
-    @apply bg-background;
+    @apply bg-transparent;
   }
   
   ::-webkit-scrollbar-thumb {
@@ -62,16 +67,29 @@
 
 @layer utilities {
   /* UniFi Drive gradient text */
-  .text-gradient {
-    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(262 83% 65%) 100%);
+  .text-gradient-unifi {
+    background: linear-gradient(135deg, hsl(262 83% 58%) 0%, hsl(262 83% 65%) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
   
-  /* Card hover effects */
-  .card-hover {
-    @apply transition-all duration-200 hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20;
+  /* Card hover effect */
+  .card-unifi {
+    @apply transition-all duration-200;
+  }
+  
+  .card-unifi:hover {
+    @apply border-primary/20 shadow-lg shadow-primary/5;
+  }
+  
+  /* Clean button styles */
+  .btn-unifi {
+    @apply font-medium transition-all duration-200;
+  }
+  
+  /* Clean input styles */
+  .input-unifi {
+    @apply transition-all duration-200 focus:ring-2 focus:ring-primary/50;
   }
 }
-

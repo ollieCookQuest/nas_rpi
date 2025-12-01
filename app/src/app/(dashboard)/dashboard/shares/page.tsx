@@ -6,9 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { formatDate } from '@/lib/utils'
 
-// Force dynamic rendering
-export const dynamic = 'force-dynamic'
-
 interface Share {
   id: string
   token: string
@@ -60,16 +57,17 @@ export default function SharesPage() {
     }
   }
 
-  const handleCopyLink = (token: string) => {
+  const handleCopyLink = async (token: string) => {
     const url = `${window.location.origin}/share/${token}`
-    navigator.clipboard.writeText(url)
+    await navigator.clipboard.writeText(url)
     alert('Share link copied to clipboard!')
   }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Shares</h1>
+      {/* Page Header */}
+      <div className="space-y-1">
+        <h1 className="text-3xl font-semibold tracking-tight">Shares</h1>
         <p className="text-muted-foreground">Manage your shared files and folders</p>
       </div>
 
@@ -78,76 +76,84 @@ export default function SharesPage() {
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : shares.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            <Share2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>No shares yet. Share a file or folder to get started.</p>
+        <Card className="card-unifi">
+          <CardContent className="py-12 text-center">
+            <Share2 className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+            <p className="text-sm text-muted-foreground">
+              No shares yet. Share a file or folder to get started.
+            </p>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-3">
           {shares.map((share) => {
             const shareUrl = `${window.location.origin}/share/${share.token}`
             const isExpired = share.expiresAt && new Date(share.expiresAt) < new Date()
 
             return (
-              <Card key={share.id}>
+              <Card key={share.id} className="card-unifi">
                 <CardHeader>
                   <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="flex items-center gap-2">
-                        <Share2 className="h-5 w-5" />
-                        Share: {share.token.substring(0, 8)}...
+                    <div className="flex-1 min-w-0">
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <Share2 className="h-4 w-4 text-primary" />
+                        Share Link
                       </CardTitle>
                       <CardDescription className="mt-2">
-                        <div className="flex items-center gap-4 text-xs">
+                        <div className="flex flex-wrap items-center gap-3 text-xs">
                           {share.isPublic && (
-                            <span className="flex items-center gap-1">
+                            <span className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted">
                               <ExternalLink className="h-3 w-3" />
                               Public
                             </span>
                           )}
                           {share.password && (
-                            <span className="flex items-center gap-1">
+                            <span className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted">
                               <Lock className="h-3 w-3" />
                               Password Protected
                             </span>
                           )}
                           {share.expiresAt && (
-                            <span className="flex items-center gap-1">
+                            <span className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted">
                               <Calendar className="h-3 w-3" />
-                              Expires: {formatDate(share.expiresAt)}
+                              Expires {formatDate(share.expiresAt)}
                             </span>
                           )}
-                          <span>Access Count: {share.accessCount}</span>
+                          <span className="px-2 py-1 rounded-md bg-muted">
+                            {share.accessCount} accesses
+                          </span>
                         </div>
                       </CardDescription>
                     </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleCopyLink(share.token)}
-                      >
-                        <Copy className="h-4 w-4 mr-2" />
-                        Copy Link
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDeleteShare(share.token)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <div className="flex items-center gap-2 p-2 bg-muted rounded text-sm font-mono break-all">
-                    {shareUrl}
+                <CardContent className="space-y-3">
+                  <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-md">
+                    <code className="text-xs font-mono text-foreground flex-1 break-all">
+                      {shareUrl}
+                    </code>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleCopyLink(share.token)}
+                      className="h-7 w-7 flex-shrink-0"
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                  <div className="flex justify-end">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeleteShare(share.token)}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete
+                    </Button>
                   </div>
                   {isExpired && (
-                    <p className="text-sm text-destructive mt-2">This share has expired</p>
+                    <p className="text-xs text-destructive">This share has expired</p>
                   )}
                 </CardContent>
               </Card>
@@ -158,4 +164,3 @@ export default function SharesPage() {
     </div>
   )
 }
-
