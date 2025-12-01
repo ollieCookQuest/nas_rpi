@@ -28,7 +28,7 @@ export default async function DashboardPage() {
     take: 5,
   })
 
-  const usagePercent = Number((diskUsage.usedBytes * 100n) / diskUsage.totalBytes)
+  const usagePercent = Number((diskUsage.usedBytes * BigInt(100)) / diskUsage.totalBytes)
 
   return (
     <div className="space-y-6">
