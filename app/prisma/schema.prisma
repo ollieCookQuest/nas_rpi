@@ -55,7 +55,7 @@ model File {
   ownerId     String   @db.ObjectId
   owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   folderId    String?  @db.ObjectId
-  folder      Folder?  @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  folder      Folder?  @relation(fields: [folderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   isShared    Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -73,7 +73,7 @@ model Folder {
   ownerId     String   @db.ObjectId
   owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   parentId    String?  @db.ObjectId
-  parent      Folder?  @relation("FolderHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  parent      Folder?  @relation("FolderHierarchy", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   children    Folder[] @relation("FolderHierarchy")
   files       File[]
   isShared    Boolean  @default(false)
@@ -100,7 +100,6 @@ model Share {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  @@index([token])
   @@index([ownerId])
   @@map("shares")
 }
