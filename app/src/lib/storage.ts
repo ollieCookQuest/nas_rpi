@@ -3,6 +3,8 @@ import path from 'path'
 import { prisma } from './prisma'
 import { ActivityType } from '@prisma/client'
 
+export { ActivityType }
+
 const STORAGE_PATH = process.env.STORAGE_PATH || '/data/storage'
 
 export function getStoragePath(userId: string): string {
