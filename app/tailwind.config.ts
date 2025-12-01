@@ -60,6 +60,9 @@ const config = {
           darker: "#020617",
         },
       },
+      backgroundImage: {
+        'gradient-unifi': 'linear-gradient(to bottom right, #020617, #0F172A, #1e293b)',
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
