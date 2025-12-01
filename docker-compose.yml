@@ -12,9 +12,10 @@ services:
     volumes:
       - mongodb_data:/data/db
       - mongodb_config:/data/configdb
+      - ./scripts/mongo-keyfile:/etc/mongo-keyfile:ro
     networks:
       - nas_network
-    command: mongod --replSet rs0 --bind_ip_all
+    command: mongod --replSet rs0 --bind_ip_all --keyFile /etc/mongo-keyfile
     healthcheck:
       test: |
         mongosh --quiet --eval "

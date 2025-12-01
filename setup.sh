@@ -51,6 +51,16 @@ echo "Creating necessary directories..."
 mkdir -p data/storage
 mkdir -p data/mongodb
 mkdir -p data/config
+mkdir -p scripts
+
+# Generate MongoDB keyfile for replica set
+if [ ! -f scripts/mongo-keyfile ]; then
+    echo "Generating MongoDB keyfile..."
+    openssl rand -base64 756 > scripts/mongo-keyfile
+    chmod 400 scripts/mongo-keyfile
+    echo -e "${GREEN}MongoDB keyfile created.${NC}"
+fi
+
 echo -e "${GREEN}Directories created.${NC}"
 
 # Check if .env exists
